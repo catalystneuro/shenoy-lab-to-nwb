@@ -93,3 +93,18 @@ class MatDataExtractor:
 
     def _create_unit_details(self, unit_nos=None):
         pass
+    
+    def _create_behavioral_position(self, trial_nos=None):
+        trial_nos = np.arange(self._no_trials) if trial_nos is None else trial_nos
+        eye_positions = []
+        hand_positions = []
+        offset_hand_Y_jenkins = 8 # offset value, value saved is higher by this amount
+        offset_hand_Y_nitschke = 24
+        for trial_no in trial_nos:
+            eye_positions.append(
+                np.array([self.R['EYE'][trial_no][0,0]['X'].squeeze(),
+                         self.R['EYE'][trial_no][0,0]['Y'].squeeze()]).T)
+            hand_positions.append(
+                np.array([self.R['HAND'][trial_no][0, 0]['X'].squeeze(),
+                          self.R['HAND'][trial_no][0, 0]['Y'].squeeze()-offset_hand_Y_jenkins]).T)
+        
