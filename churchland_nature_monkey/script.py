@@ -22,3 +22,5 @@ for chan in range(len(trial_spike_times[0])):
     for trialno in range(extractor._no_trials):
         channel_ts.extend(trial_spike_times[trialno][chan])
     unit_spike_times.append(np.array(channel_ts))
+
+eye_positions, hand_positions, cursor_positions = extractor._create_behavioral_position()

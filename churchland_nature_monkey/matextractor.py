@@ -95,16 +95,27 @@ class MatDataExtractor:
         pass
     
     def _create_behavioral_position(self, trial_nos=None):
+        trial_times,_ = self._extract_trial_times()
         trial_nos = np.arange(self._no_trials) if trial_nos is None else trial_nos
         eye_positions = []
         hand_positions = []
+        cursor_positions = []
         offset_hand_Y_jenkins = 8 # offset value, value saved is higher by this amount
         offset_hand_Y_nitschke = 24
         for trial_no in trial_nos:
+            timestamps = np.linspace(trial_times[trial_no,0],
+                                      trial_times[trial_no,1],
+                                      len(self.R['EYE'][trial_no][0,0]['X'].squeeze()))
             eye_positions.append(
                 np.array([self.R['EYE'][trial_no][0,0]['X'].squeeze(),
-                         self.R['EYE'][trial_no][0,0]['Y'].squeeze()]).T)
+                         self.R['EYE'][trial_no][0,0]['Y'].squeeze(),
+                         timestamps]).T)
             hand_positions.append(
                 np.array([self.R['HAND'][trial_no][0, 0]['X'].squeeze(),
-                          self.R['HAND'][trial_no][0, 0]['Y'].squeeze()-offset_hand_Y_jenkins]).T)
-        
+                          self.R['HAND'][trial_no][0, 0]['Y'].squeeze()-offset_hand_Y_jenkins,
+                          timestamps]).T)
+            cursor_positions.append(
+                np.array([self.R['CURSOR'][trial_no][0, 0]['X'].squeeze(),
+                          self.R['CURSOR'][trial_no][0, 0]['Y'].squeeze(),
+                          timestamps]).T)
+        return eye_positions, hand_positions, cursor_positions
