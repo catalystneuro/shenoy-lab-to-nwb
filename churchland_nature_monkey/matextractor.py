@@ -4,14 +4,12 @@ import scipy.io as scio
 
 class MatDataExtractor:
 
-    def __init__(self, path_r_file, path_n_file):
+    def __init__(self, path_r_file):
         rfile = scio.loadmat(path_r_file)
-        nfile = scio.loadmat(path_n_file)
         self.R = rfile['R'][0]
-        self.N = nfile['Ns'][0]
         self.SU = rfile['SU']
         self._no_trials = self.R.shape[0]
-        self._no_units = self.N.shape[0]
+        self._no_units = self.SU[0,0]['unitLookup'].shape[0]
 
     def _get_trial_ids(self):
         return [self.R['CerebusInfoA'][i]['trialID'][0, 0][0, 0] for i in range(self._no_trials)]
@@ -20,8 +18,8 @@ class MatDataExtractor:
         if trial_nos is None:
             trial_nos = np.arange(self._no_trials)
         units_list = []
-        for i in trial_nos:
-            units_list.append([self.R['unit'][0]['spikeTimes'][0][i].flatten()/1e3 for i in range(self._no_units)])
+        for trial_no in trial_nos:
+            units_list.append([self.R['unit'][trial_no]['spikeTimes'][0][i].flatten()/1e3 for i in range(self._no_units)])
         return units_list
 
     def _extract_trial_times(self, trial_nos=None):

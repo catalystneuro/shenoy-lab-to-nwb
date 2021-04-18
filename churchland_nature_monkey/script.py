@@ -2,11 +2,9 @@ from churchland_nature_monkey.matextractor import MatDataExtractor
 import numpy as np
 import matplotlib.pyplot as plt
 
-rfileloc = r'C:\Users\Saksham\Documents\NWB\shenoy\data\JMaze-LFADS\RC,2009-09-18,1-2,good-ss.mat'
-nfileloc = r'C:\Users\Saksham\Documents\NWB\shenoy\data\JMaze-LFADS\N,2009-09-18,1-2,good-ss.mat'
+rfileloc = r'C:\Users\Saksham\Documents\NWB\shenoy\data\Jenkins\SpikeSorted\0912\RC,2009-09-12,1-2.mat'
 
-extractor = MatDataExtractor(rfileloc, nfileloc)
-N_fields = extractor.N.dtype.names
+extractor = MatDataExtractor(rfileloc)
 R_fields = extractor.R.dtype.names
 
 trial_ids = extractor._get_trial_ids()
