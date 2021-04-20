@@ -1,14 +1,13 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from pathlib import Path
 from pynwb import NWBHDF5IO, NWBFile
 from pynwb.file import Subject
 from datetime import datetime
 import uuid
-import neo
-from tqdm import tqdm
 import pynwb
 from hdmf.backends.hdf5.h5_utils import H5DataIO
+from hdmf.data_utils import DataChunkIterator
+
 
 def write_nwb(raw_file_loc,
               eye_positions, hand_positions, cursor_positions,
@@ -42,8 +41,23 @@ def write_nwb(raw_file_loc,
                                   location=location,filtering='1000Hz',
                                   group=group,id=electrode_no)
         electrode_table_region = nwbfile.create_electrode_table_region(list(np.arange(192)), 'M1 and PMd electrodes combined')
+
+        def lfp_iterator():
+            trim_len = []
+            for blk_no, blk in enumerate(lfp_data):
+                trim_len.append(np.min([i.shape[0] for i in blk])-1)
+            for ch_no in range(192):
+                blk_id = 0 if ch_no<96 else 1
+                ch_no_corr = ch_no if ch_no<96 else ch_no-96
+                out_val = []
+                for blk_no, block in enumerate(lfp_data):
+                    out_val.append(block[blk_id][:trim_len[blk_no],ch_no_corr].squeeze())
+                yield np.concatenate(out_val)
+
         lfp_es = pynwb.ecephys.ElectricalSeries(name='lfp',
-                                                data=H5DataIO(lfp_data,compression=True,compression_opts=9),
+                                                data=H5DataIO(
+                                                    DataChunkIterator(lfp_iterator(), buffer_size=1)
+                                                    ,compression=True,compression_opts=9),
                                                 electrodes=electrode_table_region,
                                                 starting_time=0.0,rate=1000.0)
         #crate processing module:
