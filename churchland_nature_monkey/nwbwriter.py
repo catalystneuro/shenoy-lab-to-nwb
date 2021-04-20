@@ -8,12 +8,13 @@ import uuid
 import neo
 from tqdm import tqdm
 import pynwb
-
+from hdmf.backends.hdf5.h5_utils import H5DataIO
 
 def write_nwb(raw_file_loc,
               eye_positions, hand_positions, cursor_positions,
-              trial_events, trial_details, trial_times, trial_spike_times,
-              lfp_data):
+              trial_events, trial_details, trial_times, unit_spike_times,
+              lfp_data,
+              unit_lookup, array_lookup):
 
     nwbfile_loc = raw_file_loc/f'{raw_file_loc.name}_nwb.nwb'
 
@@ -41,7 +42,9 @@ def write_nwb(raw_file_loc,
                                   location=location,filtering='1000Hz',
                                   group=group,id=electrode_no)
         electrode_table_region = nwbfile.create_electrode_table_region(list(np.arange(192)), 'M1 and PMd electrodes combined')
-        lfp_es = pynwb.ecephys.ElectricalSeries(name='lfp',data=lfp_data,electrodes=electrode_table_region,
+        lfp_es = pynwb.ecephys.ElectricalSeries(name='lfp',
+                                                data=H5DataIO(lfp_data,compression=True,compression_opts=9),
+                                                electrodes=electrode_table_region,
                                                 starting_time=0.0,rate=1000.0)
         #crate processing module:
         ephys_mod = nwbfile.create_processing_module('ecephys', 'ephys - filtered data')
@@ -62,20 +65,23 @@ def write_nwb(raw_file_loc,
                                                  timestamps=cursor_position_concat[:, 2],
                                                              reference_frame='screen lower left corner 0,0')
         beh_mod.add(position_container)
-        #create acquisition: target positions.
-
         #create trials table:
         for trial_no in range(trial_times.shape[0]):
             nwbfile.add_trial(start_time=trial_times[trial_no,0],
                               stop_time=trial_times[trial_no,1],
-                              timeseries=[eye_ts, hand_ts, cursor_ts])
+                              timeseries=[eye_ts, hand_ts, cursor_ts, lfp_es])
         for col_details in trial_events:
             nwbfile.add_trial_column(**col_details)
         for col_details in trial_details:
             nwbfile.add_trial_column(**col_details)
-        nwbfile.add_trial_column(name='SpikeTimes',
-                                 description='times of threshold crossings',
-                                 data=trial_spike_times)
-
+        # create units table:
+        unit_lookup_corrected = [list(np.array([ch_id-1]) + 96) if array_lookup[no] == 2 else [ch_id-1]
+                                 for no, ch_id in enumerate(unit_lookup)]
+        electrode_group_list = [pmd, m1]
+        for unit_no in range(len(unit_spike_times)):
+            nwbfile.add_unit(spike_times=unit_spike_times[unit_no],
+                             electrodes=[unit_lookup_corrected[unit_no]],
+                             electrode_group=electrode_group_list[array_lookup[unit_no]-1])
         # write file:
+        print('writing to disc')
         io.write(nwbfile)

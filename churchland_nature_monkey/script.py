@@ -20,9 +20,12 @@ unit_spike_times = []
 for chan in range(len(trial_spike_times[0])):
     channel_ts = []
     for trialno in range(extractor._no_trials):
-        channel_ts.extend(trial_spike_times[trialno][chan])
+        channel_ts.extend(trial_spike_times[trialno][chan]+trial_times[trialno,0])
+        if trial_spike_times[trialno][chan].size>0:
+            assert trial_spike_times[trialno][chan][-1]<trial_times[trialno,1]
     unit_spike_times.append(np.array(channel_ts))
-
+unit_lookup = extractor.SU['unitLookup'][0,0][:,0]
+array_lookup = extractor.SU['arrayLookup'][0,0][:,0]
 eye_positions, hand_positions, cursor_positions = extractor._create_behavioral_position()
 
 ## write to NWB:

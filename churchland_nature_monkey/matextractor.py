@@ -68,24 +68,22 @@ class MatDataExtractor:
                 """
         if trial_nos is None:
             trial_nos = np.arange(self._no_trials)
-        trial_events_dict = []
+        trial_details_dict = []
         events = [['possibleRTproblem','discardTrial',"flag that will usually be 0, but is set to 1 if there was a photo box problem (meaning RT can't be calculated accurately) or we had a hand tracking error during the movement. In general, throw those trials away."],
                   ['success','task_success',"indicates whether the monkey was successful on this trial"],
                   ['trialType','trialType','trial type'],
                   ['trialVersion','trialVersion','trial version'],
                   ['novelMaze','novelMaze','novel maze']]
         for event in events:
-            trial_events_dict.append(dict(name=event[1],
+            trial_details_dict.append(dict(name=event[1],
                                           data=np.array([self.R[event[0]][i][0, 0] for i in trial_nos]),
                                           description=event[2]))
         maze_details = [
             ['numFlies','maze_num_targets','number of targets presented'],
-            ['numBarriers','maze_num_barriers','number of barriers presented'],
-            ['activeFly','accessible_target',"indicates which target is accessible (indices match flyX and flyY)."],
-            ['whichFly','hit_target',"indicates which target was hit (indices match flyX and flyY)"]
+            ['numBarriers','maze_num_barriers','number of barriers presented']
         ]
         for maze_data in maze_details:
-            trial_events_dict.append(dict(name=maze_data[1],
+            trial_details_dict.append(dict(name=maze_data[1],
                                           data=np.array([self.R[maze_data[0]][i][0, 0] for i in trial_nos]),
                                           description=maze_data[2]))
         #add target positions/size:
@@ -93,16 +91,18 @@ class MatDataExtractor:
         for i in trial_nos:
             target_positions.append(np.concatenate([self.R['PARAMS'][i][0, 0]['flyX'],
                                                     self.R['PARAMS'][i][0, 0]['flyY']],
-                                                   axis=0))
-        target_size = np.array([self.R['PARAMS'][i][0, 0]['flySize'][0,0] for i in trial_nos])
-        trial_events_dict.append(dict(name='target_position',
-                                      data=target_positions,
-                                      description='x,y position of all targets on screen'))
-        trial_events_dict.append(dict(name='target_size',
+                                                   axis=0).T)
+        hit_target_position = np.concatenate(
+            [pos[self.R['whichFly'][no][0, 0]-1, :][:,np.newaxis].T for no, pos in enumerate(target_positions)])
+        trial_details_dict.append(dict(name='hit_target_position',
+                                      data=hit_target_position,
+                                      description='x,y position on screen of the target hit'))
+        target_size = np.array([self.R['PARAMS'][i][0, 0]['flySize'][0, 0] for i in trial_nos])
+        trial_details_dict.append(dict(name='target_size',
                                       data=target_size,
                                       description='half width of the targets'))
         #add barrier position/size:
-        return trial_events_dict
+        return trial_details_dict
     
     def _create_behavioral_position(self, trial_nos=None):
         trial_times,_ = self._extract_trial_times()
@@ -128,3 +128,5 @@ class MatDataExtractor:
                           self.R['CURSOR'][trial_no][0, 0]['Y'].squeeze(),
                           timestamps]).T)
         return eye_positions, hand_positions, cursor_positions
+
+#TODO: build units
