@@ -72,11 +72,18 @@ class MatDataExtractor:
         if trial_nos is None:
             trial_nos = np.arange(self._no_trials)
         trial_details_dict = []
-        events = [['possibleRTproblem','discardTrial',"flag that will usually be 0, but is set to 1 if there was a photo box problem (meaning RT can't be calculated accurately) or we had a hand tracking error during the movement. In general, throw those trials away."],
+        events = [['possibleRTproblem','discardTrial',"flag that will usually be 0, but is set to 1 "
+                                                      "if there was a photo box problem (meaning RT can't be "
+                                                      "calculated accurately) or we had a hand tracking error "
+                                                      "during the movement. In general, throw those trials away."],
                   ['success','task_success',"indicates whether the monkey was successful on this trial"],
                   ['trialType','trialType','trial type'],
-                  ['trialVersion','trialVersion','trial version'],
-                  ['protoTrial','protoTrial','the first trial type'],
+                  ['trialVersion','trialVersion','should be 0 for a truly random maze '
+                                                 '(two random barriers). For a degenerate maze'
+                                                 ' (real maze with some barriers randomly removed) '
+                                                 'trialVersion is >10'],
+                  ['protoTrial','protoTrial','whether that trial was used as the prototype '
+                                             'trial for figuring out which trials were consistent'],
                   ['primaryCondNum','maze_condition',
                    'The set of 27 (or 108) mazes included was composed of 3 (or 12) “subsets”. '
                    'Each subset contained 3 related mazes. Each maze had 3 “versions”: the 3-target with barrier, '
@@ -162,4 +169,17 @@ class MatDataExtractor:
         maze_details_list.append(dict(name='target_size',
                                        data=target_size,
                                        description='half width of the targets'))
+        barrier_data = []
+        for trial_no in trial_nos:
+            non_empty = True if len(self.R['BARRIER'][trial_no])>0 else False
+            struct_len = self.R['BARRIER'][trial_no]['X'].shape[1] if non_empty else 0
+            keys = ['X','Y','halfHeight','halfWidth']
+            out_ar = np.zeros([struct_len,4])
+            for no, key in enumerate(keys):
+                out_ar[:, no] = \
+                    np.array([self.R['BARRIER'][trial_no][key][0,i][0, 0] for i in range(struct_len)]).squeeze()
+            barrier_data.append(out_ar)
+        maze_details_list.append(dict(name='barrier_info',
+                                      data=barrier_data,
+                                      description='(x,y,halfwidth,halfhwidth)'))
         return maze_details_list
