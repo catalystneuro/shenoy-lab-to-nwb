@@ -8,6 +8,7 @@ import pynwb
 from hdmf.backends.hdf5.h5_utils import H5DataIO
 from hdmf.data_utils import DataChunkIterator
 from pynwb.base import DynamicTable
+import pytz
 
 
 def write_nwb(raw_file_loc,
@@ -19,15 +20,17 @@ def write_nwb(raw_file_loc,
     nwbfile_loc = raw_file_loc/f'{raw_file_loc.name}_nwb.nwb'
 
     with NWBHDF5IO(str(nwbfile_loc),'w') as io:
-        session_date = datetime.strptime(raw_file_loc.name, '%Y-%m-%d')
+        session_date = pytz.timezone('US/Pacific').localize(datetime.strptime(raw_file_loc.name, '%Y-%m-%d'))
         subject = Subject(sex='M', species='Macaca mulatta', subject_id=raw_file_loc.parent.name)
         nwbfile = NWBFile(session_description='',identifier=str(uuid.uuid4()),
                           session_start_time=session_date, experimenter='Matt Kaufmann',
-                          experiment_description='',institution='Stanford',
+                          experiment_description='',institution='Stanford University',
                           related_publications='10.1038/nature11129',
                           subject=subject)
         #create electrode group:
-        device = nwbfile.create_device(name='Utah Array',description='96 channel utah array',manufacturer='BlackRock')
+        device = nwbfile.create_device(name='Utah Array',
+                                       description='96 channel utah array',
+                                       manufacturer='BlackRock Microsystems')
         m1 = nwbfile.create_electrode_group(name='M1 array', description='', device=device, location='M1')
         pmd = nwbfile.create_electrode_group(name='PMd array', description='', device=device, location='PMd')
         #create electrodes tabls:
@@ -84,7 +87,7 @@ def write_nwb(raw_file_loc,
             nwbfile.add_trial(start_time=trial_times[trial_no,0],
                               stop_time=trial_times[trial_no,1],
                               timeseries=[eye_ts, hand_ts, cursor_ts, lfp_es])
-        for col_details in trial_events+trial_details+maze_details:
+        for col_details in trial_events+trial_details+maze_details[:-1]:
             nwbfile.add_trial_column(**col_details)
         # create units table:
         unit_lookup_corrected = [list(np.array([ch_id-1]) + 96) if array_lookup[no] == 2 else [ch_id-1]
