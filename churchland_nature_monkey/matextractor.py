@@ -6,8 +6,10 @@ import neo
 
 class MatDataExtractor:
 
-    def __init__(self, path_r_file, raw_file_loc):
-        rfile = scio.loadmat(path_r_file)
+    def __init__(self, input_dir):
+        raw_file_loc = list(Path(input_dir).glob('**/*.ns2'))[0].parent
+        path_r_file = list(Path(input_dir).glob('**/RC*.mat'))[0]
+        rfile = scio.loadmat(str(path_r_file))
         self.nsx_loc = Path(raw_file_loc)
         self.R = rfile['R'][0]
         self.SU = rfile['SU']

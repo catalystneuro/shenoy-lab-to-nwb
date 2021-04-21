@@ -3,10 +3,8 @@ from churchland_nature_monkey.nwbwriter import write_nwb
 import numpy as np
 from pathlib import Path
 
-
-rfileloc = Path(r'C:\Users\Saksham\Documents\NWB\shenoy\data\Jenkins\SpikeSorted\0912\RC,2009-09-12,1-2.mat')
-raw_file_loc = Path(r'C:\Users\Saksham\Documents\NWB\shenoy\data\Jenkins\2009-09-12')
-extractor = MatDataExtractor(rfileloc, raw_file_loc)
+folder = r"C:\Users\Saksham\Documents\NWB\shenoy\data\Jenkins\SpikeSorted\0912"
+extractor = MatDataExtractor(folder)
 R_fields = extractor.R.dtype.names
 
 trial_ids = extractor.get_trial_ids()
@@ -30,7 +28,7 @@ array_lookup = extractor.SU['arrayLookup'][0,0][:,0]
 eye_positions, hand_positions, cursor_positions = extractor.extract_behavioral_position()
 lfp_data = extractor.extract_lfp()
 
-write_nwb(raw_file_loc,
+write_nwb(extractor.nsx_loc,
               eye_positions, hand_positions, cursor_positions,
               trial_events, trial_details, trial_times, unit_spike_times, maze_details,
               lfp_data,
