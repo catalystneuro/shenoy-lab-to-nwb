@@ -1,4 +1,5 @@
 from churchland_nature_monkey.matextractor import MatDataExtractor
+from churchland_nature_monkey.nwbwriter import write_nwb
 import numpy as np
 from pathlib import Path
 
@@ -8,12 +9,13 @@ raw_file_loc = Path(r'C:\Users\Saksham\Documents\NWB\shenoy\data\Jenkins\2009-09
 extractor = MatDataExtractor(rfileloc, raw_file_loc)
 R_fields = extractor.R.dtype.names
 
-trial_ids = extractor._get_trial_ids()
-trial_spike_times = extractor._extract_unit_spike_times()
-trial_times, split_id = extractor._extract_trial_times()
+trial_ids = extractor.get_trial_ids()
+trial_spike_times = extractor.extract_unit_spike_times()
+trial_times, split_id = extractor.extract_trial_times()
 inter_trial_intervals = np.array([trial_times[i+1,0]-trial_times[i,1] for i in range(extractor._no_trials-1)])
-trial_events = extractor._extract_trial_events()
-trial_details = extractor._extract_trial_details()
+trial_events = extractor.extract_trial_events()
+trial_details = extractor.extract_trial_details()
+maze_details = extractor.extract_maze_data()
 # extract channel spike times independent of trial:
 unit_spike_times = []
 for chan in range(len(trial_spike_times[0])):
@@ -25,5 +27,11 @@ for chan in range(len(trial_spike_times[0])):
     unit_spike_times.append(np.array(channel_ts))
 unit_lookup = extractor.SU['unitLookup'][0,0][:,0]
 array_lookup = extractor.SU['arrayLookup'][0,0][:,0]
-eye_positions, hand_positions, cursor_positions = extractor._create_behavioral_position()
+eye_positions, hand_positions, cursor_positions = extractor.extract_behavioral_position()
 lfp_data = extractor.extract_lfp()
+
+write_nwb(raw_file_loc,
+              eye_positions, hand_positions, cursor_positions,
+              trial_events, trial_details, trial_times, unit_spike_times, maze_details,
+              lfp_data,
+              unit_lookup, array_lookup)

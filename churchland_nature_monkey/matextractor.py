@@ -87,30 +87,7 @@ class MatDataExtractor:
             trial_details_dict.append(dict(name=event[1],
                                           data=np.array([self.R[event[0]][i][0, 0] for i in trial_nos]),
                                           description=event[2]))
-        maze_details = [
-            ['numFlies','maze_num_targets','number of targets presented'],
-            ['numBarriers','maze_num_barriers','number of barriers presented']
-        ]
-        for maze_data in maze_details:
-            trial_details_dict.append(dict(name=maze_data[1],
-                                          data=np.array([self.R[maze_data[0]][i][0, 0] for i in trial_nos]),
-                                          description=maze_data[2]))
-        #add target positions/size:
-        target_positions = []
-        for i in trial_nos:
-            target_positions.append(np.concatenate([self.R['PARAMS'][i][0, 0]['flyX'],
-                                                    self.R['PARAMS'][i][0, 0]['flyY']],
-                                                   axis=0).T)
-        hit_target_position = np.concatenate(
-            [pos[self.R['whichFly'][no][0, 0]-1, :][:,np.newaxis].T for no, pos in enumerate(target_positions)])
-        trial_details_dict.append(dict(name='hit_target_position',
-                                      data=hit_target_position,
-                                      description='x,y position on screen of the target hit'))
-        target_size = np.array([self.R['PARAMS'][i][0, 0]['flySize'][0, 0] for i in trial_nos])
-        trial_details_dict.append(dict(name='target_size',
-                                      data=target_size,
-                                      description='half width of the targets'))
-        #add barrier position/size:
+
         return trial_details_dict
     
     def extract_behavioral_position(self, trial_nos=None):
@@ -156,3 +133,33 @@ class MatDataExtractor:
                 electrodes[elec_no] = bk.get_analogsignal_chunk()
             lfps[no] = electrodes
         return lfps
+    
+    def extract_maze_data(self, trial_nos=None):
+        if trial_nos is None:
+            trial_nos = np.arange(self._no_trials)
+        maze_details_list = []
+        maze_details = [
+            ['numFlies', 'maze_num_targets', 'number of targets presented'],
+            ['numBarriers', 'maze_num_barriers', 'number of barriers presented'],
+            ['novelMaze', 'novelMaze', 'novel maze']
+        ]
+        for maze_data in maze_details:
+            maze_details_list.append(dict(name=maze_data[1],
+                                           data=np.array([self.R[maze_data[0]][i][0, 0] for i in trial_nos]),
+                                           description=maze_data[2]))
+        # add target positions/size:
+        target_positions = []
+        for i in trial_nos:
+            target_positions.append(np.concatenate([self.R['PARAMS'][i][0, 0]['flyX'],
+                                                    self.R['PARAMS'][i][0, 0]['flyY']],
+                                                   axis=0).T)
+        hit_target_position = np.concatenate(
+            [pos[self.R['whichFly'][no][0, 0] - 1, :][:, np.newaxis].T for no, pos in enumerate(target_positions)])
+        maze_details_list.append(dict(name='hit_target_position',
+                                       data=hit_target_position,
+                                       description='x,y position on screen of the target hit'))
+        target_size = np.array([self.R['PARAMS'][i][0, 0]['flySize'][0, 0] for i in trial_nos])
+        maze_details_list.append(dict(name='target_size',
+                                       data=target_size,
+                                       description='half width of the targets'))
+        return maze_details_list
