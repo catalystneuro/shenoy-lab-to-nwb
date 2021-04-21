@@ -7,11 +7,12 @@ import uuid
 import pynwb
 from hdmf.backends.hdf5.h5_utils import H5DataIO
 from hdmf.data_utils import DataChunkIterator
+from pynwb.base import DynamicTable
 
 
 def write_nwb(raw_file_loc,
               eye_positions, hand_positions, cursor_positions,
-              trial_events, trial_details, trial_times, unit_spike_times,
+              trial_events, trial_details, trial_times, unit_spike_times, maze_details,
               lfp_data,
               unit_lookup, array_lookup):
 
@@ -41,7 +42,7 @@ def write_nwb(raw_file_loc,
                                   location=location,filtering='1000Hz',
                                   group=group,id=electrode_no)
         electrode_table_region = nwbfile.create_electrode_table_region(list(np.arange(192)), 'M1 and PMd electrodes combined')
-
+        #create lfp:
         def lfp_iterator():
             trim_len = []
             for blk_no, blk in enumerate(lfp_data):
@@ -60,7 +61,6 @@ def write_nwb(raw_file_loc,
                                                     ,compression=True,compression_opts=9),
                                                 electrodes=electrode_table_region,
                                                 starting_time=0.0,rate=1000.0)
-        #crate processing module:
         ephys_mod = nwbfile.create_processing_module('ecephys', 'ephys - filtered data')
         ephys_mod.add(pynwb.ecephys.LFP(electrical_series=lfp_es))
         #adding behavior: eye, cursor position, hand position.
@@ -84,9 +84,7 @@ def write_nwb(raw_file_loc,
             nwbfile.add_trial(start_time=trial_times[trial_no,0],
                               stop_time=trial_times[trial_no,1],
                               timeseries=[eye_ts, hand_ts, cursor_ts, lfp_es])
-        for col_details in trial_events:
-            nwbfile.add_trial_column(**col_details)
-        for col_details in trial_details:
+        for col_details in trial_events+trial_details+maze_details:
             nwbfile.add_trial_column(**col_details)
         # create units table:
         unit_lookup_corrected = [list(np.array([ch_id-1]) + 96) if array_lookup[no] == 2 else [ch_id-1]

@@ -14,10 +14,10 @@ class MatDataExtractor:
         self._no_trials = self.R.shape[0]
         self._no_units = self.SU[0,0]['unitLookup'].shape[0]
 
-    def _get_trial_ids(self):
+    def get_trial_ids(self):
         return [self.R['CerebusInfoA'][i]['trialID'][0, 0][0, 0] for i in range(self._no_trials)]
 
-    def _extract_unit_spike_times(self, trial_nos=None):
+    def extract_unit_spike_times(self, trial_nos=None):
         if trial_nos is None:
             trial_nos = np.arange(self._no_trials)
         units_list = []
@@ -25,7 +25,7 @@ class MatDataExtractor:
             units_list.append([self.R['unit'][trial_no]['spikeTimes'][0][i].flatten()/1e3 for i in range(self._no_units)])
         return units_list
 
-    def _extract_trial_times(self, trial_nos=None):
+    def extract_trial_times(self, trial_nos=None):
         """
         Times in seconds
         """
@@ -44,7 +44,7 @@ class MatDataExtractor:
         trial_times[split_id:,:]=trial_times[split_id:,:]+offset_value
         return trial_times, split_id
 
-    def _extract_trial_events(self, trial_nos=None):
+    def extract_trial_events(self, trial_nos=None):
         """
         Time in seconds wrt trial start time
         """
@@ -65,7 +65,7 @@ class MatDataExtractor:
                                           description=event[2]))
         return trial_events_dict
 
-    def _extract_trial_details(self, trial_nos=None):
+    def extract_trial_details(self, trial_nos=None):
         """
                 Time in seconds wrt trial start time
                 """
@@ -76,7 +76,13 @@ class MatDataExtractor:
                   ['success','task_success',"indicates whether the monkey was successful on this trial"],
                   ['trialType','trialType','trial type'],
                   ['trialVersion','trialVersion','trial version'],
-                  ['novelMaze','novelMaze','novel maze']]
+                  ['protoTrial','protoTrial','the first trial type'],
+                  ['primaryCondNum','maze_condition',
+                   'The set of 27 (or 108) mazes included was composed of 3 (or 12) “subsets”. '
+                   'Each subset contained 3 related mazes. Each maze had 3 “versions”: the 3-target with barrier, '
+                   'the 1-target with barriers, and the 1-target with no barriers. These 3 versions shared the same '
+                   'target positions. The 3-target and 1-target versions also shared the same barrier positions. '
+                   'In the 3-target version, exactly one target was accessible ']]
         for event in events:
             trial_details_dict.append(dict(name=event[1],
                                           data=np.array([self.R[event[0]][i][0, 0] for i in trial_nos]),
@@ -107,8 +113,8 @@ class MatDataExtractor:
         #add barrier position/size:
         return trial_details_dict
     
-    def _create_behavioral_position(self, trial_nos=None):
-        trial_times,_ = self._extract_trial_times()
+    def extract_behavioral_position(self, trial_nos=None):
+        trial_times,_ = self.extract_trial_times()
         trial_nos = np.arange(self._no_trials) if trial_nos is None else trial_nos
         eye_positions = []
         hand_positions = []
