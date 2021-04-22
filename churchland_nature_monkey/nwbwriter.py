@@ -28,11 +28,14 @@ def write_nwb(raw_file_loc,
                           related_publications='10.1038/nature11129',
                           subject=subject)
         #create electrode group:
-        device = nwbfile.create_device(name='Utah Array',
+        device_m1 = nwbfile.create_device(name='Utah Array(M1)',
                                        description='96 channel utah array',
                                        manufacturer='BlackRock Microsystems')
-        m1 = nwbfile.create_electrode_group(name='M1 array', description='', device=device, location='M1')
-        pmd = nwbfile.create_electrode_group(name='PMd array', description='', device=device, location='PMd')
+        device_pmd = nwbfile.create_device(name='Utah Array(PMd)',
+                                       description='96 channel utah array',
+                                       manufacturer='BlackRock Microsystems')
+        m1 = nwbfile.create_electrode_group(name='M1 array', description='', device=device_m1, location='M1')
+        pmd = nwbfile.create_electrode_group(name='PMd array', description='', device=device_pmd, location='PMd')
         #create electrodes tabls:
         for electrode_no in range(192):
             if electrode_no>95:
