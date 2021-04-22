@@ -54,18 +54,26 @@ class MatDataExtractor:
         if trial_nos is None:
             trial_nos = np.arange(self._no_trials)
         trial_events_dict = []
-        events = [['actualFlyAppears','target_presentation','time of target presentation'],
-                  ['actualLandingTime','go_cue','time of go cue'],
-                  ['onlineRT','RT','reaction time'],
-                  ['moveBeginsTime','moveBeginsTime','movement onset time'],
-                  ['moveEndsTime','moveEndsTime','movement stop time']]
+        events = [['actualFlyAppears','target_presentation_time','time of target presentation'],
+                  ['actualLandingTime','go_cue_time','time of go cue'],
+                  ['onlineRT','reaction_time','reaction time'],
+                  ['moveBeginsTime','move_begins_time','movement onset time'],
+                  ['moveEndsTime','move_ends_time','movement stop time']]
         for event in events:
-            trial_events_dict.append(dict(name=event[1],
+            if 'onlineRT' not in event:
+                trial_events_dict.append(dict(name=event[1],
                                           data=np.array([self.R[event[0]][i][0, 0]/1e3 + trial_times[i, 0]
                                                        if self.R[event[0]][i].shape[0] != 0
                                                        else np.nan
                                                        for i in trial_nos]),
                                           description=event[2]))
+            else:
+                trial_events_dict.append(dict(name=event[1],
+                                              data=np.array([self.R[event[0]][i][0, 0]/1e3
+                                                             if self.R[event[0]][i].shape[0] != 0
+                                                             else np.nan
+                                                             for i in trial_nos]),
+                                              description=event[2]))
         return trial_events_dict
 
     def extract_trial_details(self, trial_nos=None):
