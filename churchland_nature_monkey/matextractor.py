@@ -192,6 +192,6 @@ class MatDataExtractor:
             barrier_data.append(out_ar)
         maze_details_list.append(dict(name='barrier_info',
                                       data=barrier_data,
-                                      description='(x,y,halfwidth,halfhwidth)',
+                                      description='(x,y,halfwidth,halfheight)',
                                       index=True))
         return maze_details_list
