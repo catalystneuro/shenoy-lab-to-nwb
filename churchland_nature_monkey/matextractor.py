@@ -50,6 +50,7 @@ class MatDataExtractor:
         """
         Time in seconds wrt trial start time
         """
+        trial_times,_ = self.extract_trial_times()
         if trial_nos is None:
             trial_nos = np.arange(self._no_trials)
         trial_events_dict = []
@@ -60,10 +61,10 @@ class MatDataExtractor:
                   ['moveEndsTime','moveEndsTime','movement stop time']]
         for event in events:
             trial_events_dict.append(dict(name=event[1],
-                                          data=np.array([self.R[event[0]][i][0, 0]
-                                                       if self.R[event[0]][i].shape[0]!=0
+                                          data=np.array([self.R[event[0]][i][0, 0]/1e3 + trial_times[i, 0]
+                                                       if self.R[event[0]][i].shape[0] != 0
                                                        else np.nan
-                                                       for i in trial_nos])/1e3,
+                                                       for i in trial_nos]),
                                           description=event[2]))
         return trial_events_dict
 

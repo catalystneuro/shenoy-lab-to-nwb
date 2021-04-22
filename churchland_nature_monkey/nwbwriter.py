@@ -46,21 +46,25 @@ def write_nwb(raw_file_loc,
                                   group=group,id=electrode_no)
         electrode_table_region = nwbfile.create_electrode_table_region(list(np.arange(192)), 'M1 and PMd electrodes combined')
         #create lfp:
+
         def lfp_iterator():
-            trim_len = []
+            trim_len = [0]
             for blk_no, blk in enumerate(lfp_data):
-                trim_len.append(np.min([i.shape[0] for i in blk])-1)
-            for ch_no in range(192):
-                blk_id = 0 if ch_no<96 else 1
-                ch_no_corr = ch_no if ch_no<96 else ch_no-96
+                trim_len.append(np.min([i.shape[0] for i in blk]))
+            #iterate over each time:
+            for time_id in range(np.sum(trim_len)-1):
+                active_blk = np.max(np.where(np.cumsum(trim_len) <= time_id)[0])
+                time_id_corr = trim_len[active_blk]
+                block = lfp_data[active_blk]
                 out_val = []
-                for blk_no, block in enumerate(lfp_data):
-                    out_val.append(block[blk_id][:trim_len[blk_no],ch_no_corr].squeeze())
+                time_id_corrected = time_id - time_id_corr
+                for channel_group in block:
+                    out_val.append(channel_group[time_id_corrected, :].squeeze())
                 yield np.concatenate(out_val)
 
         lfp_es = pynwb.ecephys.ElectricalSeries(name='lfp',
                                                 data=H5DataIO(
-                                                    DataChunkIterator(lfp_iterator(), buffer_size=1)
+                                                    DataChunkIterator(lfp_iterator(), buffer_size=100000)
                                                     ,compression=True,compression_opts=9),
                                                 electrodes=electrode_table_region,
                                                 starting_time=0.0,rate=1000.0)
@@ -69,26 +73,42 @@ def write_nwb(raw_file_loc,
         #adding behavior: eye, cursor position, hand position.
         beh_mod = nwbfile.create_processing_module('behavior', 'contains monkey movement data')
         position_container = pynwb.behavior.Position()
-        eye_position_concat = np.concatenate(eye_positions,axis=0)
-        cursor_position_concat = np.concatenate(cursor_positions, axis=0)
-        hand_position_concat = np.concatenate(hand_positions, axis=0)
-        eye_ts = position_container.create_spatial_series('Eye',data=eye_position_concat[:,:2],
-                                                 timestamps=eye_position_concat[:,2],
-                                                          reference_frame='screen lower left corner 0,0')
-        hand_ts = position_container.create_spatial_series('Hand', data=hand_position_concat[:, :2],
-                                                 timestamps=hand_position_concat[:, 2],
-                                                           reference_frame='screen lower left corner 0,0')
-        cursor_ts = position_container.create_spatial_series('Cursor', data=cursor_position_concat[:, :2],
-                                                 timestamps=cursor_position_concat[:, 2],
-                                                             reference_frame='screen lower left corner 0,0')
+        eye_data = np.concatenate(eye_positions,axis=0)
+        eye_position_concat = pynwb.base.TimeSeries('Eye',
+                                                    data=eye_data[:,:2],
+                                                    unit='n.a.')
+        cursor_data = np.concatenate(cursor_positions,axis=0)
+        cursor_position_concat = pynwb.base.TimeSeries('Cursor',
+                                                    data=cursor_data[:,:2],
+                                                    unit='n.a.')
+        hand_data = np.concatenate(hand_positions,axis=0)
+        hand_position_concat = pynwb.base.TimeSeries('Hand',
+                                                    data=hand_data[:,:2],
+                                                    unit='n.a.')
+        eye_ts = position_container.create_spatial_series('Eye',
+                                                          data=eye_position_concat,
+                                                          timestamps=eye_data[:,2],
+                                                          reference_frame='screen center')
+        hand_ts = position_container.create_spatial_series('Hand',
+                                                           data=hand_position_concat,
+                                                           timestamps=hand_data[:, 2],
+                                                           reference_frame='screen center')
+        cursor_ts = position_container.create_spatial_series('Cursor',
+                                                             data=cursor_position_concat,
+                                                             timestamps=cursor_data[:, 2],
+                                                             reference_frame='screen center')
         beh_mod.add(position_container)
         #create trials table:
+        for col_details in trial_events+trial_details+maze_details:
+            col_det = {i:col_details[i] for i in col_details if 'data' not in i}
+            nwbfile.add_trial_column(**col_det)
         for trial_no in range(trial_times.shape[0]):
-            nwbfile.add_trial(start_time=trial_times[trial_no,0],
-                              stop_time=trial_times[trial_no,1],
-                              timeseries=[eye_ts, hand_ts, cursor_ts, lfp_es])
-        for col_details in trial_events+trial_details+maze_details[:-1]:
-            nwbfile.add_trial_column(**col_details)
+            col_details_dict = {i['name']:i['data'][trial_no] for i in trial_events+trial_details+maze_details}
+            col_details_dict.update(start_time=trial_times[trial_no,0],
+                                    stop_time=trial_times[trial_no,1],
+                                    timeseries=[eye_ts, hand_ts, cursor_ts, lfp_es])
+            nwbfile.add_trial(**col_details_dict)
+
         # create units table:
         unit_lookup_corrected = [list(np.array([ch_id-1]) + 96) if array_lookup[no] == 2 else [ch_id-1]
                                  for no, ch_id in enumerate(unit_lookup)]
