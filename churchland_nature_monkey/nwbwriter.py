@@ -113,7 +113,8 @@ def write_nwb(raw_file_loc,
         for unit_no in range(len(unit_spike_times)):
             nwbfile.add_unit(spike_times=unit_spike_times[unit_no],
                              electrodes=[unit_lookup_corrected[unit_no]],
-                             electrode_group=electrode_group_list[array_lookup[unit_no]-1])
+                             electrode_group=electrode_group_list[array_lookup[unit_no]-1],
+                             obs_intervals=trial_times)
         # write file:
         print('writing to disc')
         io.write(nwbfile)
