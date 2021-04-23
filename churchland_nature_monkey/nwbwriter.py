@@ -77,29 +77,23 @@ def write_nwb(raw_file_loc,
         beh_mod = nwbfile.create_processing_module('behavior', 'contains monkey movement data')
         position_container = pynwb.behavior.Position()
         eye_data = np.concatenate(eye_positions,axis=0)
-        eye_position_concat = pynwb.base.TimeSeries('Eye',
-                                                    data=eye_data[:,:2],
-                                                    unit='n.a.')
         cursor_data = np.concatenate(cursor_positions,axis=0)
-        cursor_position_concat = pynwb.base.TimeSeries('Cursor',
-                                                    data=cursor_data[:,:2],
-                                                    unit='n.a.')
         hand_data = np.concatenate(hand_positions,axis=0)
-        hand_position_concat = pynwb.base.TimeSeries('Hand',
-                                                    data=hand_data[:,:2],
-                                                    unit='n.a.')
         eye_ts = position_container.create_spatial_series('Eye',
-                                                          data=eye_position_concat,
+                                                          data=eye_data[:,:2],
                                                           timestamps=eye_data[:,2],
-                                                          reference_frame='screen center')
+                                                          reference_frame='screen center',
+                                                          conversion=np.nan)
         hand_ts = position_container.create_spatial_series('Hand',
-                                                           data=hand_position_concat,
+                                                           data=hand_data[:,:2],
                                                            timestamps=hand_data[:, 2],
-                                                           reference_frame='screen center')
+                                                           reference_frame='screen center',
+                                                           conversion=np.nan)
         cursor_ts = position_container.create_spatial_series('Cursor',
-                                                             data=cursor_position_concat,
+                                                             data=cursor_data[:,:2],
                                                              timestamps=cursor_data[:, 2],
-                                                             reference_frame='screen center')
+                                                             reference_frame='screen center',
+                                                             conversion=np.nan)
         beh_mod.add(position_container)
         #create trials table:
         for col_details in trial_events+trial_details+maze_details:
