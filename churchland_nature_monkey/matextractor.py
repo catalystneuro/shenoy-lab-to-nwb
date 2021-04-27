@@ -83,17 +83,17 @@ class MatDataExtractor:
         if trial_nos is None:
             trial_nos = np.arange(self._no_trials)
         trial_details_dict = []
-        events = [['possibleRTproblem','discardTrial',"flag that will usually be 0, but is set to 1 "
+        events = [['possibleRTproblem','discard_trial',"flag that will usually be 0, but is set to 1 "
                                                       "if there was a photo box problem (meaning RT can't be "
                                                       "calculated accurately) or we had a hand tracking error "
                                                       "during the movement. In general, throw those trials away."],
                   ['success','task_success',"indicates whether the monkey was successful on this trial"],
-                  ['trialType','trialType','trial type'],
-                  ['trialVersion','trialVersion','should be 0 for a truly random maze '
+                  ['trialType','trial_type','trial type'],
+                  ['trialVersion','trial_version','should be 0 for a truly random maze '
                                                  '(two random barriers). For a degenerate maze'
                                                  ' (real maze with some barriers randomly removed) '
                                                  'trialVersion is >10'],
-                  ['protoTrial','protoTrial','whether that trial was used as the prototype '
+                  ['protoTrial','proto_trial','whether that trial was used as the prototype '
                                              'trial for figuring out which trials were consistent'],
                   ['primaryCondNum','maze_condition',
                    'The set of 27 (or 108) mazes included was composed of 3 (or 12) “subsets”. '
@@ -159,7 +159,7 @@ class MatDataExtractor:
         maze_details = [
             ['numFlies', 'maze_num_targets', 'number of targets presented'],
             ['numBarriers', 'maze_num_barriers', 'number of barriers presented'],
-            ['novelMaze', 'novelMaze', 'novel maze']
+            ['novelMaze', 'novel_maze', 'novel maze']
         ]
         for maze_data in maze_details:
             maze_details_list.append(dict(name=maze_data[1],
