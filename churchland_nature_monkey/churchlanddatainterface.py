@@ -24,12 +24,13 @@ class ChurchlandDataInterface(NWBConverter):
         source_folder : str
             path to folder containing .mat and .nsx files for the whole session
         """
+        self.source_folder = Path(source_folder)
         nsx_files_list = list(source_folder.glob('**/*.ns2'))
-        mat_files_list = list(source_folder.glob('**/*.mat'))
+        mat_files_list = list(source_folder.glob('**/RC*.mat'))
         assert len(nsx_files_list)>0,'no nsx files found in the folder provided'
         assert len(mat_files_list)>0,'no .mat RC file found in the folder provided'
-        source_data_dict = dict(MultiBlackRockRecordingDatainterface=nsx_files_list[0].parent,
-                                MatDataInterface=mat_files_list[0])
+        source_data_dict = dict(MultiBlackRockRecordingDatainterface=dict(filename=str(nsx_files_list[0].parent)),
+                                MatDataInterface=dict(file_path=str(mat_files_list[0])))
         super().__init__(source_data_dict)
 
     def get_metadata(self):
@@ -37,7 +38,7 @@ class ChurchlandDataInterface(NWBConverter):
         session_date = pytz.timezone('US/Pacific').localize(datetime.strptime(self.source_folder.name, '%Y-%m-%d'))
         metadata_base['NWBFile']=dict(
             session_description='', identifier=str(uuid.uuid4()),
-            session_start_time=session_date, experimenter=['Matthew Kaufman','Mark Churchland'],
+            session_start_time=session_date, experimenter=['Matthew T. Kaufman', 'Mark M. Churchland'],
             experiment_description='', institution='Stanford University',
             related_publications='10.1038/nature11129'
             ),
