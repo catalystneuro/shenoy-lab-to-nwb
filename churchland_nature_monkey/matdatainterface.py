@@ -32,14 +32,14 @@ class MatDataInterface(BaseDataInterface):
                     properties=dict(
                         file_path=dict(
                             type='string')))
-        return
+        return base
 
-    def _convert_schema_object_to_array(self, schema_to_convert):
+    @staticmethod
+    def _convert_schema_object_to_array(schema_to_convert):
         base_schema = get_base_schema()
         base_schema.update(type='array')
         _ = base_schema.pop('properties')
-        base_schema['items'] = get_base_schema()
-        base_schema['items']['properties'] = schema_to_convert
+        base_schema['items'] = schema_to_convert
         return base_schema
 
     def get_metadata_schema(self):
@@ -76,62 +76,32 @@ class MatDataInterface(BaseDataInterface):
         return metadata_schema
 
     def get_metadata(self):
-        eye_positions, hand_positions, cursor_positions = \
-            self.mat_extractor.extract_behavioral_position()
-        eye_data = np.concatenate(eye_positions, axis=0)
-        cursor_data = np.concatenate(cursor_positions, axis=0)
-        hand_data = np.concatenate(hand_positions, axis=0)
-        trial_events = self.mat_extractor.extract_trial_events()
-        trial_details = self.mat_extractor.extract_trial_details()
-        maze_details = self.mat_extractor.extract_maze_data()
-        unit_lookup = self.mat_extractor.SU['unitLookup'][0, 0][:, 0]
-        array_lookup = self.mat_extractor.SU['arrayLookup'][0, 0][:, 0]
-        unit_spike_times, trial_times = self._extract_channel_spike_times()
-        unit_lookup_corrected = [list(np.array([ch_id - 1]) + 96) if array_lookup[no] == 2 else [ch_id - 1]
-                                 for no, ch_id in enumerate(unit_lookup)]
         metadata = dict(
-            Ecephys=dict(Device=[dict(name='Utah Array(M1)',
+            Ecephys=dict(Device=[dict(name='Utah Array(PMd)',
                                       description='96 channel utah array',
                                       manufacturer='BlackRock Microsystems'),
-                                 dict(name='Utah Array(PMd)',
+                                 dict(name='Utah Array(M1)',
                                       description='96 channel utah array',
                                       manufacturer='BlackRock Microsystems')],
-                         ElectrodeGroup=[dict(name='M1 array',
+                         ElectrodeGroup=[dict(name='PMd array',
                                               description='',
-                                              location='M1',
-                                              device='Utah Array(M1)'),
-                                         dict(name='PMd array',
+                                              location='Caudal, dorsal Pre-motor cortex, Left hemisphere',
+                                              device='Utah Array(PMd)'),
+                                         dict(name='M1 array',
                                               description='',
-                                              location='PMd',
-                                              device='Utah Array(PMd)')]),
+                                              location='M1 in Motor Cortex, left hemisphere',
+                                              device='Utah Array(M1)')]),
             Behavior=dict(Position=[dict(name='Eye',
-                                         data=eye_data[:, :2],
-                                         timestamps=eye_data[:, 2],
-                                         reference_frame='screen center',
-                                         conversion=np.nan),
+                                         reference_frame='screen center'),
                                     dict(name='Hand',
-                                         data=hand_data[:, :2],
-                                         timestamps=hand_data[:, 2],
-                                         reference_frame='screen center',
-                                         conversion=np.nan),
+                                         reference_frame='screen center'),
                                     dict(name='Cursor',
-                                         data=cursor_data[:, :2],
-                                         timestamps=cursor_data[:, 2],
-                                         reference_frame='screen center',
-                                         conversion=np.nan)
+                                         reference_frame='screen center')
                                     ]
                           ),
-            Intervals=dict(Trials=trial_events + trial_details + maze_details +
-                                  [dict(name='start_time',
-                                        data=trial_times[:, 0],
-                                        description='Start time of epoch, in seconds'),
-                                   dict(name='stop_time',
-                                        data=trial_times[:, 1],
-                                        description='Stop time of epoch, in seconds')
-                                   ]),
-            Units=dict(spike_times=unit_spike_times,
-                       electrodes=[unit_lookup_corrected],
-                       obs_intervals=trial_times),
+            Intervals=dict(Trials=dict(name='trials',
+                                       description='metadata about experimental trials')),
+            Units=dict(name='units'),
             Electrodes=dict(ElectrodeTable=dict(name='electrodes',
                                                 description='metadata about extracellular electrodes'))
         )
@@ -154,6 +124,17 @@ class MatDataInterface(BaseDataInterface):
         assert isinstance(nwbfile, NWBFile), "'nwbfile' should be of type pynwb.NWBFile"
         metadata_default = self.get_metadata()
         metadata = dict_deep_update(metadata_default, metadata)
+        eye_positions, hand_positions, cursor_positions = \
+            self.mat_extractor.extract_behavioral_position()
+        eye_data = np.concatenate(eye_positions, axis=0)
+        cursor_data = np.concatenate(cursor_positions, axis=0)
+        hand_data = np.concatenate(hand_positions, axis=0)
+        trial_events = self.mat_extractor.extract_trial_events()
+        trial_details = self.mat_extractor.extract_trial_details()
+        maze_details = self.mat_extractor.extract_maze_data()
+        unit_lookup = self.mat_extractor.SU['unitLookup'][0, 0][:, 0]
+        array_lookup = self.mat_extractor.SU['arrayLookup'][0, 0][:, 0]
+        unit_spike_times, trial_times = self._extract_channel_spike_times()
         # add devices:
         device_list = []
         for device_kwargs in metadata['Ecephys']['Device']:
@@ -173,21 +154,30 @@ class MatDataInterface(BaseDataInterface):
         # add behavior:
         beh_mod = nwbfile.create_processing_module('behavior', 'contains monkey movement data')
         position_container = Position()
-        for pos_container_args in metadata['Behavior']['Position']:
-            position_container.create_spatial_series(**pos_container_args)
+        spatial_series_list = []
+        for name,data in zip(['Eye','Hand','Cursor'],[eye_data, hand_data,cursor_data]):
+            spatial_series_list.append(
+                position_container.create_spatial_series(name=name,
+                                                         data=data[:,:2],
+                                                         timestamps=data[:,2],
+                                                         reference_frame='screen center',
+                                                         conversion=np.nan))
         beh_mod.add(position_container)
         # add trials:
-        trials_kwargs = dict()
-        for col_details in metadata['Intervals']['Trials']:
-            trials_kwargs.update({col_details['name']:col_details['data']})
-            if col_details['name'] not in ['start_time','stop_time']:
-                nwbfile.add_trial_column(name=col_details['name'],
-                                         description=col_details['description'])
-        for trial_no in range(trials_kwargs['start_time'].shape[0]):
-            nwbfile.add_trial(**{i['name']:i['data'][trial_no] for i in trials_kwargs})
+        for col_details in trial_events + trial_details + maze_details:
+            col_det = {i: col_details[i] for i in col_details if 'data' not in i}
+            nwbfile.add_trial_column(**col_det)
+        for trial_no in range(trial_times.shape[0]):
+            col_details_dict = {i['name']: i['data'][trial_no] for i in trial_events + trial_details + maze_details}
+            col_details_dict.update(start_time=trial_times[trial_no, 0],
+                                    stop_time=trial_times[trial_no, 1],
+                                    timeseries=spatial_series_list)
+            nwbfile.add_trial(**col_details_dict)
         # add units:
-        array_lookup = self.mat_extractor.SU['arrayLookup'][0, 0][:, 0]
-        for unit_no in range(len(metadata['Units']['spike_times'])):
-            unit_kwargs = {i:j[unit_no] for i,j in metadata['Units'].items()}
-            unit_kwargs.update(electrode_group=elec_group_list[array_lookup[unit_no]-1])
-            nwbfile.add_unit(**unit_kwargs)
+        unit_lookup_corrected = [list(np.array([ch_id - 1]) + 96) if array_lookup[no] == 2 else [ch_id - 1]
+                                 for no, ch_id in enumerate(unit_lookup)]
+        for unit_no in range(len(unit_spike_times)):
+            nwbfile.add_unit(spike_times=unit_spike_times[unit_no],
+                             electrodes=[unit_lookup_corrected[unit_no]],
+                             electrode_group=elec_group_list[array_lookup[unit_no] - 1],
+                             obs_intervals=trial_times)

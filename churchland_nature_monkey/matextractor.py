@@ -7,10 +7,8 @@ import neo
 class MatDataExtractor:
 
     def __init__(self, input_dir):
-        raw_file_loc = list(Path(input_dir).glob('**/*.ns2'))[0].parent
-        path_r_file = list(Path(input_dir).glob('**/RC*.mat'))[0]
+        path_r_file = Path(input_dir)
         rfile = scio.loadmat(str(path_r_file))
-        self.nsx_loc = Path(raw_file_loc)
         self.R = rfile['R'][0]
         self.SU = rfile['SU']
         self._no_trials = self.R.shape[0]
@@ -132,25 +130,6 @@ class MatDataExtractor:
                           self.R['CURSOR'][trial_no][0, 0]['Y'].squeeze(),
                           timestamps]).T)
         return eye_positions, hand_positions, cursor_positions
-
-    def extract_lfp(self):
-        nsx_files_list = list([i.stem.strip('datafile') for i in self.nsx_loc.glob('**/*.ns2')])
-        no_segments = 5
-        raw_files_names = []
-        for seg_no in range(no_segments):
-            if f'A00{seg_no}' in nsx_files_list:
-                assert f'B00{seg_no}' in nsx_files_list
-                raw_files_names.append([f'A00{seg_no}',f'B00{seg_no}'])
-        lfps = [None]*len(raw_files_names)
-        for no, data_part in enumerate(raw_files_names):
-            electrodes = [None]*2
-            for elec_no, electrode in enumerate((data_part)):
-                nev_file = self.nsx_loc/f'datafile{electrode}.nev'
-                print(f'reading: {nev_file.name}')
-                bk = neo.BlackrockIO(str(nev_file))
-                electrodes[elec_no] = bk.get_analogsignal_chunk()
-            lfps[no] = electrodes
-        return lfps
     
     def extract_maze_data(self, trial_nos=None):
         if trial_nos is None:
