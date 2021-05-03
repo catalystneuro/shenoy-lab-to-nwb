@@ -21,9 +21,10 @@ class MatDataInterface(BaseDataInterface):
     def __init__(self, file_path: Path):
         super().__init__()
         self.file_path = Path(file_path)
+        self._subject_name = self.file_path.parents[2].name[0]
         assert self.file_path.suffix == '.mat', 'file_path should be a .mat'
         assert self.file_path.exists(), 'file_path does not exist'
-        self.mat_extractor = MatDataExtractor(self.file_path)
+        self.mat_extractor = MatDataExtractor(self.file_path, monkey_name=self._subject_name)
 
     @classmethod
     def get_source_schema(cls):

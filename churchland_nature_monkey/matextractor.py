@@ -6,7 +6,8 @@ import neo
 
 class MatDataExtractor:
 
-    def __init__(self, input_dir):
+    def __init__(self, input_dir, monkey_name='J'):
+        self.monkey_name = monkey_name
         path_r_file = Path(input_dir)
         rfile = scio.loadmat(str(path_r_file))
         self.R = rfile['R'][0]
@@ -114,6 +115,7 @@ class MatDataExtractor:
         cursor_positions = []
         offset_hand_Y_jenkins = 8 # offset value, value saved is higher by this amount
         offset_hand_Y_nitschke = 24
+        offset_val = offset_hand_Y_nitschke if self.monkey_name=='N' else offset_hand_Y_jenkins
         for trial_no in trial_nos:
             timestamps = trial_times[trial_no,0] + \
                          np.arange(len(self.R['EYE'][trial_no][0,0]['X'].squeeze()))/1000.0
@@ -123,7 +125,7 @@ class MatDataExtractor:
                          timestamps]).T)
             hand_positions.append(
                 np.array([self.R['HAND'][trial_no][0, 0]['X'].squeeze(),
-                          self.R['HAND'][trial_no][0, 0]['Y'].squeeze()-offset_hand_Y_jenkins,
+                          self.R['HAND'][trial_no][0, 0]['Y'].squeeze()-offset_val,
                           timestamps]).T)
             cursor_positions.append(
                 np.array([self.R['CURSOR'][trial_no][0, 0]['X'].squeeze(),
