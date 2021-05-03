@@ -144,23 +144,40 @@ class MatDataExtractor:
         ]
         for maze_data in maze_details:
             maze_details_list.append(dict(name=maze_data[1],
-                                           data=np.array([self.R[maze_data[0]][i][0, 0] for i in trial_nos]),
-                                           description=maze_data[2]))
-        # add target positions/size:
+                                          data=np.array([self.R[maze_data[0]][i][0, 0] for i in trial_nos]),
+                                          description=maze_data[2]))
+        # add target positions/size+frame locations:
         target_positions = []
         for i in trial_nos:
             target_positions.append(np.concatenate([self.R['PARAMS'][i][0, 0]['flyX'],
                                                     self.R['PARAMS'][i][0, 0]['flyY']],
                                                    axis=0).T)
+        maze_details_list.append(dict(name='target_positions',
+                                      data=target_positions,
+                                      description='x,y position on screen of all targets presented',
+                                      index=True))
+        frame_positions = []
+        for i in trial_nos:
+            frame_positions.append([self.R['PARAMS'][i][0, 0]['frameLeft'],
+                                    self.R['PARAMS'][i][0, 0]['frameRight'],
+                                    self.R['PARAMS'][i][0, 0]['frameBottom'],
+                                    self.R['PARAMS'][i][0, 0]['frameTop'],
+                                    self.R['PARAMS'][i][0, 0]['frameWidth']])
+        maze_details_list.append(dict(name='frame_details',
+                                      data=frame_positions,
+                                      description='(frameLeft,right,bottom,top, width) '
+                                                  ':tell where the frame (outer rectangle of barriers) were. '
+                                                  'For those, the values are inner edges',
+                                      index=True))
         hit_target_position = np.concatenate(
             [pos[self.R['whichFly'][no][0, 0] - 1, :][:, np.newaxis].T for no, pos in enumerate(target_positions)])
         maze_details_list.append(dict(name='hit_target_position',
-                                       data=hit_target_position,
-                                       description='x,y position on screen of the target hit'))
+                                      data=hit_target_position,
+                                      description='x,y position on screen of the target hit'))
         target_size = np.array([self.R['PARAMS'][i][0, 0]['flySize'][0, 0] for i in trial_nos])
         maze_details_list.append(dict(name='target_size',
-                                       data=target_size,
-                                       description='half width of the targets'))
+                                      data=target_size,
+                                      description='half width of the targets'))
         barrier_data = []
         for trial_no in trial_nos:
             non_empty = True if len(self.R['BARRIER'][trial_no])>0 else False
