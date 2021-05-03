@@ -120,10 +120,8 @@ class MatDataInterface(BaseDataInterface):
             unit_spike_times.append(np.array(channel_ts))
         return unit_spike_times, trial_times
 
-    def run_conversion(self, nwbfile: NWBFile, metadata: dict = None, **kwargs):
+    def run_conversion(self, nwbfile: NWBFile, metadata: dict, **kwargs):
         assert isinstance(nwbfile, NWBFile), "'nwbfile' should be of type pynwb.NWBFile"
-        metadata_default = self.get_metadata()
-        metadata = dict_deep_update(metadata_default, metadata)
         eye_positions, hand_positions, cursor_positions = \
             self.mat_extractor.extract_behavioral_position()
         eye_data = np.concatenate(eye_positions, axis=0)
@@ -142,7 +140,7 @@ class MatDataInterface(BaseDataInterface):
         # add electrode groups:
         elec_group_list = []
         for egroup_kwargs in metadata['Ecephys']['ElectrodeGroup']:
-            egroup_kwargs['Device'] = nwbfile.device.get(egroup_kwargs['Device'])
+            egroup_kwargs['device'] = nwbfile.devices.get(egroup_kwargs['device'])
             elec_group_list.append(nwbfile.create_electrode_group(**egroup_kwargs))
         # create electrodes table:
         for electrode_no in range(192):
@@ -150,7 +148,7 @@ class MatDataInterface(BaseDataInterface):
             nwbfile.add_electrode(x=np.nan, y=np.nan, z=np.nan, imp=np.nan,
                                   location=metadata['Ecephys']['ElectrodeGroup'][id]['location'],
                                   filtering='1000Hz',
-                                  group=elec_group_list[id], id=electrode_no)
+                                  group=elec_group_list[id], id=electrode_no+1)
         # add behavior:
         beh_mod = nwbfile.create_processing_module('behavior', 'contains monkey movement data')
         position_container = Position()

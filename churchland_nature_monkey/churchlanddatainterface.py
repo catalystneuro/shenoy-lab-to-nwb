@@ -35,12 +35,14 @@ class ChurchlandDataInterface(NWBConverter):
 
     def get_metadata(self):
         metadata_base = super().get_metadata()
-        session_date = pytz.timezone('US/Pacific').localize(datetime.strptime(self.source_folder.name, '%Y-%m-%d'))
+        session_date = pytz.timezone('US/Pacific').localize(datetime.strptime('2009'+self.source_folder.name, '%Y%m%d'))
         metadata_base['NWBFile']=dict(
             session_description='', identifier=str(uuid.uuid4()),
             session_start_time=session_date, experimenter=['Matthew T. Kaufman', 'Mark M. Churchland'],
             experiment_description='', institution='Stanford University',
             related_publications='10.1038/nature11129'
-            ),
-        metadata_base['Subject'] = dict(sex='M', species='Macaca mulatta', subject_id=self.source_folder.parent.name
+            )
+        metadata_base['Subject'] = dict(sex='M', species='Macaca mulatta',
+                                        subject_id=self.source_folder.parent.parent.name
         )
+        return metadata_base
