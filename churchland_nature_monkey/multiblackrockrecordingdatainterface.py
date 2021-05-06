@@ -1,3 +1,5 @@
+import numpy as np
+
 from nwb_conversion_tools import BlackrockRecordingExtractorInterface
 from spikeextractors import BlackrockRecordingExtractor, \
     MultiRecordingChannelExtractor, MultiRecordingTimeExtractor, NwbRecordingExtractor
@@ -53,15 +55,18 @@ class MultiBlackRockRecordingDatainterface(BlackrockRecordingExtractorInterface)
         for j in self.raw_files_names:
             file_names.extend(j)
         metadata = dict(
-            Ecephys=dict(LFPElectricalSeries=[{'name': i} for i in file_names]))
+            Ecephys=dict(ElectricalSeries=[{'name': i,
+                                            'description': f'LFP signal for array{i[0]}, '
+                                                           f'segment{i[-1]}'} for i in file_names]))
         return metadata
 
     def run_conversion(self, nwbfile: NWBFile, metadata: dict, **kwargs):
         for no, extractor in enumerate(self.recording_extractor_list):
             metadata_loop = dict(
-                Ecephys=dict(LFPElectricalSeries=
-                            metadata['Ecephys']['LFPElectricalSeries'][no]))
+                Ecephys=dict(ElectricalSeries=
+                            metadata['Ecephys']['ElectricalSeries'][no]))
+            extractor._times = np.array([np.nan])
             NwbRecordingExtractor.add_electrical_series(recording=extractor,
                                                         nwbfile=nwbfile,
                                                         metadata=metadata_loop,
-                                                        write_as_lfp=True)
+                                                        write_as_lfp=False)
