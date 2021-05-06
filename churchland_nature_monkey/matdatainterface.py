@@ -5,10 +5,8 @@ from nwb_conversion_tools import NWBConverter
 from nwb_conversion_tools.basedatainterface import BaseDataInterface
 from nwb_conversion_tools.json_schema_utils import get_base_schema, dict_deep_update
 from nwb_conversion_tools.utils import get_schema_from_hdmf_class
-from pynwb import NWBFile, TimeSeries
+from pynwb import NWBFile
 from pynwb.behavior import Position, SpatialSeries
-from pynwb.file import Subject, TrialTable, ElectrodeTable
-from pynwb.epoch import TimeIntervals
 from pynwb.misc import Units
 from .matextractor import MatDataExtractor
 from pynwb.device import Device
@@ -21,7 +19,7 @@ class MatDataInterface(BaseDataInterface):
     def __init__(self, file_path: Path):
         super().__init__()
         self.file_path = Path(file_path)
-        self._subject_name = self.file_path.parents[2].name[0]
+        self._subject_name = [i.name for i in self.file_path.parents if i.name in ['Jenkins','Nitschke']][0][0]
         assert self.file_path.suffix == '.mat', 'file_path should be a .mat'
         assert self.file_path.exists(), 'file_path does not exist'
         self.mat_extractor = MatDataExtractor(self.file_path, monkey_name=self._subject_name)
