@@ -14,7 +14,7 @@ from pynwb.ecephys import ElectrodeGroup
 from pynwb.base import DynamicTable
 
 
-class MatDataInterface(BaseDataInterface):
+class ShenoyMatDataInterface(BaseDataInterface):
 
     def __init__(self, file_path: Path):
         super().__init__()
@@ -43,23 +43,12 @@ class MatDataInterface(BaseDataInterface):
 
     def get_metadata_schema(self):
         metadata_schema = NWBConverter.get_metadata_schema()
-        metadata_schema['required'] = ['Behavior', 'trials', 'units', 'Ecephys']
-        metadata_schema['properties']['Ecephys'] = get_base_schema()
+        metadata_schema['required'] = ['Behavior', 'trials', 'units']
         metadata_schema['properties']['Behavior'] = get_base_schema()
         metadata_schema['properties']['Intervals'] = get_base_schema()
-        metadata_schema['properties']['Electrodes'] = get_base_schema()
 
-        metadata_schema['properties']['Ecephys'] = get_base_schema(tag='Ecephys')
-
-        metadata_schema['properties']['Ecephys']['properties'] = dict(
-            Device=self._convert_schema_object_to_array(get_schema_from_hdmf_class(Device)),
-            ElectrodeGroup=self._convert_schema_object_to_array(get_schema_from_hdmf_class(ElectrodeGroup)))
-        metadata_schema['properties']['Ecephys']['required'] = ['Device', 'ElectrodeGroup', 'ElectricalSeries']
         dt_schema = get_base_schema(DynamicTable)
         dt_schema['additionalProperties'] = True
-        metadata_schema['properties']['Electrodes']['properties'] = dict(
-            ElectrodeTable=dt_schema,
-        )
         metadata_schema['properties']['Behavior']['properties'] = dict(
             Position=get_base_schema(),
         )
@@ -76,20 +65,6 @@ class MatDataInterface(BaseDataInterface):
 
     def get_metadata(self):
         metadata = dict(
-            Ecephys=dict(Device=[dict(name='Utah Array(PMd)',
-                                      description='96 channel utah array',
-                                      manufacturer='BlackRock Microsystems'),
-                                 dict(name='Utah Array(M1)',
-                                      description='96 channel utah array',
-                                      manufacturer='BlackRock Microsystems')],
-                         ElectrodeGroup=[dict(name='PMd array',
-                                              description='',
-                                              location='Caudal, dorsal Pre-motor cortex, Left hemisphere',
-                                              device='Utah Array(PMd)'),
-                                         dict(name='M1 array',
-                                              description='',
-                                              location='M1 in Motor Cortex, left hemisphere',
-                                              device='Utah Array(M1)')]),
             Behavior=dict(Position=[dict(name='Eye',
                                          reference_frame='screen center'),
                                     dict(name='Hand',
@@ -100,9 +75,7 @@ class MatDataInterface(BaseDataInterface):
                           ),
             Intervals=dict(Trials=dict(name='trials',
                                        description='metadata about experimental trials')),
-            Units=dict(name='units'),
-            Electrodes=dict(ElectrodeTable=dict(name='electrodes',
-                                                description='metadata about extracellular electrodes'))
+            Units=dict(name='units')
         )
         return metadata
 
@@ -132,22 +105,6 @@ class MatDataInterface(BaseDataInterface):
         unit_lookup = self.mat_extractor.SU['unitLookup'][0, 0][:, 0]
         array_lookup = self.mat_extractor.SU['arrayLookup'][0, 0][:, 0]
         unit_spike_times, trial_times = self._extract_channel_spike_times()
-        # add devices:
-        device_list = []
-        for device_kwargs in metadata['Ecephys']['Device']:
-            device_list.append(nwbfile.create_device(**device_kwargs))
-        # add electrode groups:
-        elec_group_list = []
-        for egroup_kwargs in metadata['Ecephys']['ElectrodeGroup']:
-            egroup_kwargs['device'] = nwbfile.devices.get(egroup_kwargs['device'])
-            elec_group_list.append(nwbfile.create_electrode_group(**egroup_kwargs))
-        # create electrodes table:
-        for electrode_no in range(192):
-            id = 1 if electrode_no > 95 else 0
-            nwbfile.add_electrode(x=np.nan, y=np.nan, z=np.nan, imp=np.nan,
-                                  location=metadata['Ecephys']['ElectrodeGroup'][id]['location'],
-                                  filtering='1000Hz',
-                                  group=elec_group_list[id], id=electrode_no+1)
         # add behavior:
         beh_mod = nwbfile.create_processing_module('behavior', 'contains monkey movement data')
         position_container = Position()
@@ -176,5 +133,5 @@ class MatDataInterface(BaseDataInterface):
         for unit_no in range(len(unit_spike_times)):
             nwbfile.add_unit(spike_times=unit_spike_times[unit_no],
                              electrodes=[unit_lookup_corrected[unit_no]],
-                             electrode_group=elec_group_list[array_lookup[unit_no] - 1],
+                             electrode_group=nwbfile.electrode_groups[array_lookup[unit_no] - 1],
                              obs_intervals=trial_times)
