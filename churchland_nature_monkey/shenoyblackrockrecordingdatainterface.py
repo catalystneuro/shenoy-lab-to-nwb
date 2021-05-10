@@ -1,14 +1,14 @@
 from nwb_conversion_tools import BlackrockRecordingExtractorInterface
 
 from pathlib import Path
-from typing import Union
+from typing import Union, Optional
 
-PathType = Union[str, Path, None]
+PathType = Union[str, Path]
 
 
 class ShenoyBlackRockRecordingDataInterface(BlackrockRecordingExtractorInterface):
 
-    def __init__(self, filename):
+    def __init__(self, filename: PathType):
         self.nsx_loc = Path(filename)
         super().__init__(filename=filename)
         if 'B' in self.nsx_loc.name:
@@ -19,18 +19,21 @@ class ShenoyBlackRockRecordingDataInterface(BlackrockRecordingExtractorInterface
         self.recording_extractor.clear_channels_property('name')
 
     def get_metadata(self):
-        metadata = dict()
-        metadata['Ecephys'] = dict(
-            Device=[dict(
-                name='Device_ecephys',
-                description='no description'
-            )],
-            ElectrodeGroup=[],
+        metadata = dict(
+            Ecephys=dict(
+                Device=[
+                    dict(
+                        name='Device_ecephys',
+                        description='no description'
+                    )
+                ],
+                ElectrodeGroup=[],
+            )
         )
         metadata['Ecephys'].update(
             {f'ElectricalSeries{self.nsx_loc.stem[-4:]}': dict(
                 name=self.nsx_loc.stem[-4:],
-                description=f'LFP signal for array{self.nsx_loc.stem[8]} segment {self.nsx_loc.stem[-1]}')})
+                description=f'LFP signal for array {self.nsx_loc.stem[8]}, segment {self.nsx_loc.stem[-1]}')})
         metadata['Ecephys']['Device'] = [dict(name='Utah Array(PMd)',
                                               description='96 channel utah array',
                                               manufacturer='BlackRock Microsystems'),
@@ -38,11 +41,11 @@ class ShenoyBlackRockRecordingDataInterface(BlackrockRecordingExtractorInterface
                                               description='96 channel utah array',
                                               manufacturer='BlackRock Microsystems')]
         metadata['Ecephys']['ElectrodeGroup'] = [dict(name='PMd array',
-                                                      description='',
+                                                      description='array corresponding to device implanted at PMd',
                                                       location='Caudal, dorsal Pre-motor cortex, Left hemisphere',
                                                       device_name='Utah Array(PMd)'),
                                                  dict(name='M1 array',
-                                                      description='',
+                                                      description='array corresponding to device implanted at M1',
                                                       location='M1 in Motor Cortex, left hemisphere',
                                                       device_name='Utah Array(M1)')]
         metadata['Ecephys']['Electrodes'] = [dict(name='filtering',
