@@ -24,30 +24,35 @@ class ChurchlandNWBConverter(NWBConverter):
         ----------
         source_folder : dict
         """
-        self.subject_name = source_data.get('subject_name', 'Jenkins')
-        self.session_date = source_data.get('date', datetime.now())
+        self.subject_name = source_data.get("subject_name", "Jenkins")
+        self.session_date = source_data.get("date", datetime.now())
         super().__init__(source_data)
 
     @classmethod
     def get_source_schema(cls):
         base_schema = super().get_source_schema()
-        base_schema['additionalProperties'] = True
-        base_schema['properties'].update(subject_name=dict(type='string'))
+        base_schema["additionalProperties"] = True
+        base_schema["properties"].update(subject_name=dict(type="string"))
         return base_schema
 
     def get_metadata(self):
         metadata_base = super().get_metadata()
-        metadata_base['NWBFile'] = dict(
-            session_description='', identifier=str(uuid.uuid4()),
-            session_start_time=self.session_date, experimenter=['Matthew T. Kaufman', 'Mark M. Churchland'],
-            experiment_description='', institution='Stanford University',
-            related_publications=['10.1038/nature11129',
-                                  '10.1152/jn.00892.2011',
-                                  '10.1038/nn.3643',
-                                  '10.1038/nn.4042',
-                                  '10.1146/annurev-neuro-062111-150509']
+        metadata_base["NWBFile"] = dict(
+            session_description="",
+            identifier=str(uuid.uuid4()),
+            session_start_time=self.session_date,
+            experimenter=["Matthew T. Kaufman", "Mark M. Churchland"],
+            experiment_description="",
+            institution="Stanford University",
+            related_publications=[
+                "10.1038/nature11129",
+                "10.1152/jn.00892.2011",
+                "10.1038/nn.3643",
+                "10.1038/nn.4042",
+                "10.1146/annurev-neuro-062111-150509",
+            ],
         )
-        metadata_base['Subject'] = dict(sex='M', species='Macaca mulatta',
-                                        subject_id=self.subject_name
-                                        )
+        metadata_base["Subject"] = dict(
+            sex="M", species="Macaca mulatta", subject_id=self.subject_name
+        )
         return metadata_base
