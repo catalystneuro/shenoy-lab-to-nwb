@@ -24,8 +24,8 @@ class ChurchlandNWBConverter(NWBConverter):
         ----------
         source_folder : dict
         """
-        self.subject_name = source_data.get('subject_name','Jenkins')
-        self.session_date = source_data.get('date',datetime.now())
+        self.subject_name = source_data.get('subject_name', 'Jenkins')
+        self.session_date = source_data.get('date', datetime.now())
         super().__init__(source_data)
 
     @classmethod
@@ -37,13 +37,13 @@ class ChurchlandNWBConverter(NWBConverter):
 
     def get_metadata(self):
         metadata_base = super().get_metadata()
-        metadata_base['NWBFile']=dict(
+        metadata_base['NWBFile'] = dict(
             session_description='', identifier=str(uuid.uuid4()),
             session_start_time=self.session_date, experimenter=['Matthew T. Kaufman', 'Mark M. Churchland'],
             experiment_description='', institution='Stanford University',
             related_publications='10.1038/nature11129'
-            )
+        )
         metadata_base['Subject'] = dict(sex='M', species='Macaca mulatta',
                                         subject_id=self.subject_name
-        )
+                                        )
         return metadata_base

@@ -28,7 +28,7 @@ class ShenoyMatDataInterface(BaseDataInterface):
     def get_source_schema(cls):
         base = super().get_source_schema()
         base.update(required=['filename'],
-                    properties=dict(filename=dict(type='string',format='file'),
+                    properties=dict(filename=dict(type='string', format='file'),
                                     subject_name=dict(type='string')))
         return base
 
@@ -108,11 +108,11 @@ class ShenoyMatDataInterface(BaseDataInterface):
         beh_mod = nwbfile.create_processing_module('behavior', 'contains monkey movement data')
         position_container = Position()
         spatial_series_list = []
-        for name,data in zip(['Eye','Hand','Cursor'],[eye_data, hand_data,cursor_data]):
+        for name, data in zip(['Eye', 'Hand', 'Cursor'], [eye_data, hand_data, cursor_data]):
             spatial_series_list.append(
                 position_container.create_spatial_series(name=name,
-                                                         data=data[:,:2],
-                                                         timestamps=data[:,2],
+                                                         data=data[:, :2],
+                                                         timestamps=data[:, 2],
                                                          reference_frame='screen center',
                                                          conversion=np.nan))
         beh_mod.add(position_container)
