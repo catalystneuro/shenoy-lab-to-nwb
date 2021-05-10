@@ -1,6 +1,6 @@
 from pathlib import Path
 import numpy as np
-
+from typing import Union
 from nwb_conversion_tools import NWBConverter
 from nwb_conversion_tools.basedatainterface import BaseDataInterface
 from nwb_conversion_tools.json_schema_utils import get_base_schema, dict_deep_update
@@ -8,18 +8,18 @@ from nwb_conversion_tools.utils import get_schema_from_hdmf_class
 from pynwb import NWBFile
 from pynwb.behavior import Position, SpatialSeries
 from pynwb.misc import Units
-from .matextractor import MatDataExtractor
-from pynwb.device import Device
-from pynwb.ecephys import ElectrodeGroup
+from matextractor import MatDataExtractor
 from pynwb.base import DynamicTable
+
+PathType = Union[str, Path]
 
 
 class ShenoyMatDataInterface(BaseDataInterface):
 
-    def __init__(self, file_path: Path):
+    def __init__(self, filename: PathType, subject_name='J'):
         super().__init__()
-        self.file_path = Path(file_path)
-        self._subject_name = [i.name for i in self.file_path.parents if i.name in ['Jenkins','Nitschke']][0][0]
+        self.file_path = Path(filename)
+        self._subject_name = subject_name
         assert self.file_path.suffix == '.mat', 'file_path should be a .mat'
         assert self.file_path.exists(), 'file_path does not exist'
         self.mat_extractor = MatDataExtractor(self.file_path, monkey_name=self._subject_name)
@@ -27,10 +27,9 @@ class ShenoyMatDataInterface(BaseDataInterface):
     @classmethod
     def get_source_schema(cls):
         base = super().get_source_schema()
-        base.update(required=['file_path'],
-                    properties=dict(
-                        file_path=dict(
-                            type='string')))
+        base.update(required=['filename'],
+                    properties=dict(filename=dict(type='string',format='file'),
+                                    subject_name=dict(type='string')))
         return base
 
     @staticmethod
@@ -133,5 +132,5 @@ class ShenoyMatDataInterface(BaseDataInterface):
         for unit_no in range(len(unit_spike_times)):
             nwbfile.add_unit(spike_times=unit_spike_times[unit_no],
                              electrodes=[unit_lookup_corrected[unit_no]],
-                             electrode_group=nwbfile.electrode_groups[array_lookup[unit_no] - 1],
+                             electrode_group=list(nwbfile.electrode_groups.values())[array_lookup[unit_no] - 1],
                              obs_intervals=trial_times)
