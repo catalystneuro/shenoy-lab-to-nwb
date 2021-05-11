@@ -50,6 +50,9 @@ class ChurchlandNWBConverter(NWBConverter):
                 "10.1038/nn.3643",
                 "10.1038/nn.4042",
                 "10.1146/annurev-neuro-062111-150509",
+                "10.7554/eLife.04677"""
+                "10.1523/ENEURO.0085-16.2016",
+                "10.1038/s41592-018-0109-9"
             ],
         )
         metadata_base["Subject"] = dict(
