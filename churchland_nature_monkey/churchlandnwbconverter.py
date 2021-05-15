@@ -13,6 +13,10 @@ class ChurchlandNWBConverter(NWBConverter):
         B1=ShenoyBlackRockRecordingDataInterface,
         A2=ShenoyBlackRockRecordingDataInterface,
         B2=ShenoyBlackRockRecordingDataInterface,
+        A3=ShenoyBlackRockRecordingDataInterface,
+        B3=ShenoyBlackRockRecordingDataInterface,
+        A4=ShenoyBlackRockRecordingDataInterface,
+        B4=ShenoyBlackRockRecordingDataInterface,
         Mat=ShenoyMatDataInterface,
     )
 
