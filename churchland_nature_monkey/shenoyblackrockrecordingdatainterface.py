@@ -1,7 +1,6 @@
 from nwb_conversion_tools import BlackrockRecordingExtractorInterface
-
 from pathlib import Path
-from typing import Union, Optional
+from typing import Union
 
 PathType = Union[str, Path]
 
@@ -12,11 +11,15 @@ class ShenoyBlackRockRecordingDataInterface(BlackrockRecordingExtractorInterface
         super().__init__(filename=filename)
         if "B" in self.nsx_loc.name:
             self._group_name = ["M1 array"]
+            self._region = ['M1 Motor Cortex']
             self.recording_extractor._channel_ids = [
                 i + 96 for i in self.recording_extractor._channel_ids
             ]
+            self.recording_extractor.set_channel_groups([2]*96)
         else:
             self._group_name = ["PMd array"]
+            self._region = ['Pre-Motor Cortex, dorsal']
+            self.recording_extractor.set_channel_groups([1]*96)
         self.recording_extractor.clear_channels_property("name")
 
     def get_metadata(self):
@@ -30,7 +33,9 @@ class ShenoyBlackRockRecordingDataInterface(BlackrockRecordingExtractorInterface
             {
                 f"ElectricalSeries{self.nsx_loc.stem[-4:]}": dict(
                     name=self.nsx_loc.stem[-4:],
-                    description=f"LFP signal for array {self.nsx_loc.stem[8]}, segment {self.nsx_loc.stem[-1]}",
+                    description=f"LFP signal for array {self.nsx_loc.stem[8]}, segment {self.nsx_loc.stem[-1]}"
+                    f"data for both arrays A,B in the same segment should be, but is not of the same time length"
+                    f"and cannot be synced due to lack of time stamps. Ignore the starting times.",
                 )
             }
         )
@@ -48,25 +53,20 @@ class ShenoyBlackRockRecordingDataInterface(BlackrockRecordingExtractorInterface
         ]
         metadata["Ecephys"]["ElectrodeGroup"] = [
             dict(
-                name="PMd array",
+                name="1",
                 description="array corresponding to device implanted at PMd",
                 location="Caudal, dorsal Pre-motor cortex, Left hemisphere",
-                device_name="Utah Array(PMd)",
+                device="Utah Array(PMd)",
             ),
             dict(
-                name="M1 array",
+                name="2",
                 description="array corresponding to device implanted at M1",
                 location="M1 in Motor Cortex, left hemisphere",
-                device_name="Utah Array(M1)",
+                device="Utah Array(M1)",
             ),
         ]
         metadata["Ecephys"]["Electrodes"] = [
-            dict(name="filtering", description="filtering", data=["1000Hz"] * 96),
-            dict(
-                name="group_name",
-                description="electrode group name",
-                data=self._group_name * 96,
-            ),
-        ]
+            dict(name="filtering", description="filtering", data=["1000Hz"] * 96)]
 
         return metadata
+
