@@ -164,7 +164,7 @@ class ShenoyMatDataInterface(BaseDataInterface):
         for unit_no in range(len(unit_spike_times)):
             nwbfile.add_unit(
                 spike_times=unit_spike_times[unit_no],
-                electrodes=[unit_lookup_corrected[unit_no]],
+                electrodes=unit_lookup_corrected[unit_no],
                 electrode_group=list(nwbfile.electrode_groups.values())[
                     array_lookup[unit_no] - 1
                 ],
