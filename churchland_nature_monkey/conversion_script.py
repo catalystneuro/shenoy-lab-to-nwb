@@ -50,12 +50,9 @@ def convert(source_folder):
         conversion_options=conversion_options,
     )
     print(f'converted for {source_folder}')
-    return ch
 
 source_folder = Path(
     r"C:\Users\Saksham\Documents\NWB\shenoy\data\Nitschke\spikesorted"
 )
-ch=[]
 for no, folder in enumerate(source_folder.iterdir()):
-    if folder.stem in ['0812']:
-        ch.append(convert(folder))
+    convert(folder)
