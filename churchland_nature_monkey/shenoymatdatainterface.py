@@ -3,8 +3,7 @@ import numpy as np
 from typing import Union
 from nwb_conversion_tools import NWBConverter
 from nwb_conversion_tools.basedatainterface import BaseDataInterface
-from nwb_conversion_tools.json_schema_utils import get_base_schema, dict_deep_update
-from nwb_conversion_tools.utils import get_schema_from_hdmf_class
+from nwb_conversion_tools.utils.json_schema import get_base_schema, get_schema_from_hdmf_class
 from pynwb import NWBFile
 from pynwb.behavior import Position, SpatialSeries
 from pynwb.misc import Units
@@ -46,19 +45,15 @@ class ShenoyMatDataInterface(BaseDataInterface):
         return base_schema
 
     def get_metadata_schema(self):
-        metadata_schema = NWBConverter.get_metadata_schema()
-        metadata_schema["required"] = ["Behavior", "trials", "units"]
+        metadata_schema = get_base_schema()
+        metadata_schema["required"] = ["Behavior", "Intervals", "Units"]
+        metadata_schema["properties"] = dict()
         metadata_schema["properties"]["Behavior"] = get_base_schema()
         metadata_schema["properties"]["Intervals"] = get_base_schema()
 
         dt_schema = get_base_schema(DynamicTable)
         dt_schema["additionalProperties"] = True
         metadata_schema["properties"]["Behavior"]["properties"] = dict(
-            Position=get_base_schema(),
-        )
-        metadata_schema["properties"]["Behavior"]["properties"]["Position"][
-            "properties"
-        ] = dict(
             Position=self._convert_schema_object_to_array(
                 get_schema_from_hdmf_class(SpatialSeries)
             ),
