@@ -161,6 +161,14 @@ class MatDataExtractor:
                 "target positions. The 3-target and 1-target versions also shared the same barrier positions. "
                 "In the 3-target version, exactly one target was accessible ",
             ],
+            [
+                "isConsistent",
+                "correct_reach",
+                "tells you the result of our algorithm for determining whether this reach looked like the other reaches "
+                "for this condition. To get it, we correlated the hand velocity for every pair of trials with that "
+                "condition, accepted the reach with the most high correlations as prototypical, then marked as "
+                "“consistent” only reaches that had a high enough correlation with the prototypical reach."
+            ]
         ]
         for event in events:
             trial_details_dict.append(
