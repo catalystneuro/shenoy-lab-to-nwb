@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 from datetime import datetime
 from pynwb import NWBHDF5IO, NWBFile
-from ..churchland_nature_monkey.matextractor import MatDataExtractor
+from ..maze_task.matextractor import MatDataExtractor
 from hdmf.common.table import VectorIndex
 
 
@@ -17,6 +17,21 @@ class TestChurchlandConversion(unittest.TestCase):
         self.mat_extractor = MatDataExtractor(matfile_path)
         self._io = NWBHDF5IO(str(nwbfile_path),'r')
         self.nwbfile = self._io.read()
+        # self.trial_events_map = {
+        #     'actualFlyAppears': 'target_presentation_time',
+        #     'actualLandingTime': 'go_cue_time',
+        #     'onlineRT': 'move_begins_time',
+        #     'moveEndsTime': 'move_ends_time',
+        #     'possibleRTproblem': 'discard_trial',
+        #     'success': 'task_success',
+        #     'trialType': 'trial_type',
+        #     'trialVersion': 'trial_version',
+        #     'protoTrial': 'proto_trial',
+        #     'primaryCondNum': 'maze_condition',
+        #     'numFlies': 'maze_num_targets',
+        #     'numBarriers': 'maze_num_barriers',
+        #     'novelMaze': 'novel_maze'
+        # }
 
     def tearDown(self) -> None:
         self._io.close()

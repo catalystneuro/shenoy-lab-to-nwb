@@ -10,17 +10,23 @@ class ShenoyBlackRockRecordingDataInterface(BlackrockRecordingExtractorInterface
         self.nsx_loc = Path(filename)
         super().__init__(filename=filename)
         if "B" in self.nsx_loc.name:
-            self._group_name = ["M1 array"]
-            self._region = ['M1 Motor Cortex']
+            self._region = 'M1 Motor Cortex'
             self.recording_extractor._channel_ids = [
                 i + 96 for i in self.recording_extractor._channel_ids
             ]
             self.recording_extractor.set_channel_groups([2]*96)
         else:
-            self._group_name = ["PMd array"]
-            self._region = ['Pre-Motor Cortex, dorsal']
+            self._region = 'Pre-Motor Cortex, dorsal'
             self.recording_extractor.set_channel_groups([1]*96)
         self.recording_extractor.clear_channels_property("name")
+        for chan_id in self.recording_extractor.get_channel_ids():
+            self.recording_extractor.set_channel_property(chan_id, 'filtering','1000Hz')
+            self.recording_extractor.set_channel_property(chan_id, 'brain_area',self._region)
+
+    def get_metadata_schema(self):
+        metadata_schema = super(ShenoyBlackRockRecordingDataInterface, self).get_metadata_schema()
+        metadata_schema['properties']['Ecephys']['additionalProperties'] = True
+        return metadata_schema
 
     def get_metadata(self):
         metadata = dict(
@@ -65,8 +71,6 @@ class ShenoyBlackRockRecordingDataInterface(BlackrockRecordingExtractorInterface
                 device="Utah Array(M1)",
             ),
         ]
-        metadata["Ecephys"]["Electrodes"] = [
-            dict(name="filtering", description="filtering", data=["1000Hz"] * 96)]
 
         return metadata
 

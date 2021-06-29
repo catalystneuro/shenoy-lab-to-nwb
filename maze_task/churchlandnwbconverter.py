@@ -44,7 +44,7 @@ class ChurchlandNWBConverter(NWBConverter):
         metadata_base["NWBFile"] = dict(
             session_description="",
             identifier=str(uuid.uuid4()),
-            session_start_time=self.session_date,
+            session_start_time=datetime.isoformat(self.session_date),
             experimenter=["Matthew T. Kaufman", "Mark M. Churchland"],
             experiment_description="",
             institution="Stanford University",
