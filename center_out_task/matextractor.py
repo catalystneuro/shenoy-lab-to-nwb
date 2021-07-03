@@ -78,12 +78,12 @@ class MatDataExtractor:
 
     def extract_behavioral_position(self):
         eye_pos = np.concatenate(self._return_array('eyePos',element=1))
-        cursor_pos = np.concatenate(self._return_array('cursorPos', element=1))[:2,:]
-        hand_pos = self._return_array('handPos', element=1)
-        decode_pos = self._return_array('decodePos', element=1)
+        cursor_pos = np.concatenate(self._return_array('cursorPos', element=1))[:,:2]
+        hand_pos = np.concatenate(self._return_array('handPos', element=1))
+        decode_pos = np.concatenate(self._return_array('decodePos', element=1))
         juice = [self.R[self.R['juice'][i][0]]['jc'][:int(self.R[self.R['trialLength'][i][0]][0, 0])]
                     for i in range(self._no_trials)]
-        return eye_pos, cursor_pos, hand_pos, decode_pos, juice
+        return eye_pos, hand_pos, cursor_pos, decode_pos, juice
 
     def extract_task_data(self):
         out_dict = []
@@ -105,13 +105,16 @@ class MatDataExtractor:
                              data=[trlparams['timeFail'][0, 0] for trlparams in trial_params]))
         out_dict.append(dict(name='target_pos',
                              description='position of target on screen',
-                             data=[trlparams['posTarget'][()].squeeze() for trlparams in trial_params]))
+                             data=[trlparams['posTarget'][()].squeeze() for trlparams in trial_params],
+                             index=True))
         out_dict.append(dict(name='target_size',
                              description='target size',
-                             data=[trlparams['sizeTarget'][()].squeeze() for trlparams in trial_params]))
+                             data=[trlparams['sizeTarget'][()].squeeze() for trlparams in trial_params],
+                             index=True))
         out_dict.append(dict(name='barrier_points',
                              description='barrier points location',
-                             data=[trlparams['barrierPoints'][()].squeeze() for trlparams in trial_params]))
+                             data=[trlparams['barrierPoints'][()].squeeze() for trlparams in trial_params],
+                             index=True))
         return out_dict
 
 
@@ -126,9 +129,12 @@ class MatDataExtractor:
             target_on  = self.R[self.R['timeTargetOn'][i][0]]
             target_held = self.R[self.R['timeTargetHeld'][i][0]]
             if len(target_acquire.shape)>1:
-                time_target_acquire.append((target_acquire[()]/1e3+trial_start).squeeze().tolist())
+                if target_acquire.shape==(1,1):
+                    time_target_acquire.append([target_acquire[0,0]/1e3+trial_start])
+                else:
+                    time_target_acquire.append((target_acquire[()]/1e3 + trial_start).squeeze().tolist())
             else:
-                time_target_acquire.append(np.nan)
+                time_target_acquire.append([np.nan])
             if len(target_held.shape)>1:
                 time_target_held.append(target_held[0, 0]/1e3 + trial_start)
             else:
@@ -137,5 +143,15 @@ class MatDataExtractor:
                 time_target_on.append(target_on[0,0]/1e3+trial_start)
             else:
                 time_target_on.append(np.nan)
-
-        return time_target_on, time_target_acquire, time_target_held
+        out_dict = [dict(name='time_target_on',
+                         description='time when target was shown on screen',
+                         data=time_target_on),
+                    dict(name='time_target_acquire',
+                         description='time when target was acquired by monkey',
+                         data=time_target_acquire,
+                         index=True),
+                    dict(name='time_target_held',
+                         description='time for which target was held by monkey',
+                         data=time_target_held)
+                    ]
+        return out_dict
