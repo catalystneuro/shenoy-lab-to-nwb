@@ -160,8 +160,9 @@ class COutMatDataInterface(BaseDataInterface):
                 device=nwbfile.devices["Utah Electrode"])
         # add units:
         for no,unit_sp_times in enumerate(spike_times):
+            elec_group = 1 if no>95 else 0
             nwbfile.add_unit(
                 spike_times=unit_sp_times,
                 electrodes=[no],
-                electrode_group=list(nwbfile.electrode_groups.values())[no],
-                obs_intervals=np.array([trial_times[0][0],trial_times[-1][-1]]))
+                electrode_group=list(nwbfile.electrode_groups.values())[elec_group],
+                obs_intervals=np.array([trial_times[0][0],trial_times[-1][-1]])[np.newaxis,:])
