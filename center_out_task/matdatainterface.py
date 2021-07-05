@@ -3,12 +3,14 @@ import numpy as np
 from typing import Union
 from nwb_conversion_tools import NWBConverter
 from nwb_conversion_tools.basedatainterface import BaseDataInterface
-from nwb_conversion_tools.utils.json_schema import get_base_schema, get_schema_from_hdmf_class
+from nwb_conversion_tools.utils.json_schema import (
+    get_base_schema, get_schema_from_hdmf_class, get_schema_for_NWBFile)
 from pynwb import NWBFile, TimeSeries
 from pynwb.behavior import Position, SpatialSeries
 from pynwb.misc import Units
 from .matextractor import MatDataExtractor
 from pynwb.base import DynamicTable
+from pynwb.file import Subject
 
 PathType = Union[str, Path]
 
@@ -42,10 +44,13 @@ class COutMatDataInterface(BaseDataInterface):
 
     def get_metadata_schema(self):
         metadata_schema = get_base_schema()
-        metadata_schema["required"] = ["Behavior", "Intervals", "Units"]
+        metadata_schema["required"] = ["Behavior", "Intervals",
+                                       "Units", "Subject", "NWBFile"]
         metadata_schema["properties"] = dict()
         metadata_schema["properties"]["Behavior"] = get_base_schema()
         metadata_schema["properties"]["Intervals"] = get_base_schema()
+        metadata_schema["properties"]["NWBFile"] = get_schema_for_NWBFile()
+        metadata_schema["properties"]["Intervals"] = get_schema_from_hdmf_class(Subject)
 
         dt_schema = get_base_schema(DynamicTable)
         dt_schema["additionalProperties"] = True
@@ -64,6 +69,12 @@ class COutMatDataInterface(BaseDataInterface):
 
     def get_metadata(self):
         metadata = dict(
+            Subject=dict(
+                sex="M", species="Macaca mulatta",
+                subject_id=self.mat_extractor.subject_name
+                        ),
+            NWBFile=dict(
+                session_start_time=str(self.mat_extractor.session_start)),
             Behavior=dict(
                 Position=[
                     dict(name="Eye", reference_frame="screen center"),
@@ -93,7 +104,7 @@ class COutMatDataInterface(BaseDataInterface):
         trial_times_all = np.concatenate(trial_times)
         task_data = self.mat_extractor.extract_task_data()
         task_times_data = self.mat_extractor.extract_task_times()
-        # spike_times = self.mat_extractor.extract_unit_spike_times()
+        spike_times = self.mat_extractor.extract_unit_spike_times()
 
         # add behavior:
         beh_mod = nwbfile.create_processing_module(
@@ -137,11 +148,20 @@ class COutMatDataInterface(BaseDataInterface):
                 timeseries=spatial_series_list,
             )
             nwbfile.add_trial(**col_details_dict)
-
-        # # add units:
-        # for no,unit_sp_times in enumerate(spike_times):
-        #     nwbfile.add_unit(
-        #         spike_times=unit_sp_times,
-        #         electrodes=no,
-        #         electrode_group=list(nwbfile.electrode_groups.values())[round(192/no)],
-        #         obs_intervals=trial_times[no])
+        #add electrdoe groups:
+        nwbfile.create_device(name="Utah Electrode",description='192 channels microelectrode array')
+        nwbfile.create_electrode_group(name="1",
+                description="array corresponding to device implanted at PMd",
+                location="Caudal, dorsal Pre-motor cortex, Left hemisphere",
+                device=nwbfile.devices["Utah Electrode"])
+        nwbfile.create_electrode_group(name="2",
+                description="array corresponding to device implanted at M1",
+                location="M1 in Motor Cortex, left hemisphere",
+                device=nwbfile.devices["Utah Electrode"])
+        # add units:
+        for no,unit_sp_times in enumerate(spike_times):
+            nwbfile.add_unit(
+                spike_times=unit_sp_times,
+                electrodes=[no],
+                electrode_group=list(nwbfile.electrode_groups.values())[no],
+                obs_intervals=np.array([trial_times[0][0],trial_times[-1][-1]]))

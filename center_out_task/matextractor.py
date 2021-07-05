@@ -16,6 +16,9 @@ class MatDataExtractor:
         self._colnames = list(self.R.keys())
         self._no_trials = len(self.R[self._colnames[0]])
         self.session_start = self._convert_matlab_datenum(0)
+        self.subject_name = ''.join(
+            [chr(self.R[self.R['subject'][0][0]][j,0])
+             for j in range(len(self.R[self.R['subject'][0][0]]))])
 
     def _chr_convert(self, array):
         if isinstance(array,np.ndarray):
