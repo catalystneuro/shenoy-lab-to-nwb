@@ -7,7 +7,7 @@ from nwb_conversion_tools.utils.json_schema import get_base_schema, get_schema_f
 from pynwb import NWBFile
 from pynwb.behavior import Position, SpatialSeries
 from pynwb.misc import Units
-from matextractor import MatDataExtractor
+from .matextractor import MatDataExtractor
 from pynwb.base import DynamicTable
 
 PathType = Union[str, Path]
