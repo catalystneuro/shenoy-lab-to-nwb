@@ -93,13 +93,8 @@ class COutMatDataInterface(BaseDataInterface):
 
     def run_conversion(self, nwbfile: NWBFile, metadata: dict, **kwargs):
         assert isinstance(nwbfile, NWBFile), "'nwbfile' should be of type pynwb.NWBFile"
-        (
-            eye_positions,
-            hand_positions,
-            cursor_positions,
-            decode_positions,
-            juice
-        ) = self.mat_extractor.extract_behavioral_position()
+        beh_pos = self.mat_extractor.extract_behavioral_position()
+        stim_pos = self.mat_extractor.extract_stimulus()
         trial_times = self.mat_extractor.get_trial_times()
         trial_times_all = np.concatenate(trial_times)
         task_data = self.mat_extractor.extract_task_data()
@@ -112,25 +107,19 @@ class COutMatDataInterface(BaseDataInterface):
         )
         position_container = Position()
         spatial_series_list = []
-        for name, data in zip(
-            ["Eye", "Hand", "Cursor", "Decode"],
-                [eye_positions, hand_positions, cursor_positions, decode_positions]
-        ):
-            spatial_series_list.append(
-                position_container.create_spatial_series(
-                    name=name,
-                    data=data,
-                    timestamps=trial_times_all,
-                    reference_frame="screen center",
-                    conversion=np.nan,
-                )
-            )
+        for beh in beh_pos:
+            args = beh.update(
+                timestamps=trial_times_all,
+                reference_frame="screen center",
+                conversion=np.nan)
+            spatial_series_list.append(position_container.create_spatial_series(**args))
         beh_mod.add(position_container)
         #add stimulus:
         nwbfile.add_stimulus(TimeSeries(name='juice_reward',
-                                        description='times when the juice reward was given',
-                                        data=juice,
-                                        timestamps=trial_times_all))
+                                        description='1 is when reward was presented',
+                                        data=stim_pos,
+                                        timestamps=trial_times_all,
+                                        unit='n.a.'))
         # add trials:
         for col_details in task_data+task_times_data:
             col_det = dict(name=col_details['name'],description=col_details['description'])

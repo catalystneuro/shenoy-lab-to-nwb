@@ -80,13 +80,25 @@ class MatDataExtractor:
         return spike_times_all_list
 
     def extract_behavioral_position(self):
-        eye_pos = np.concatenate(self._return_array('eyePos',element=1))
-        cursor_pos = np.concatenate(self._return_array('cursorPos', element=1))[:,:2]
-        hand_pos = np.concatenate(self._return_array('handPos', element=1))
-        decode_pos = np.concatenate(self._return_array('decodePos', element=1))
-        juice = [self.R[self.R['juice'][i][0]]['jc'][:int(self.R[self.R['trialLength'][i][0]][0, 0])]
-                    for i in range(self._no_trials)]
-        return eye_pos, hand_pos, cursor_pos, decode_pos, juice
+        out_dict = []
+        out_dict.append(dict(name='Eye',
+                             description='pos of eye in x,y',
+                             data=np.concatenate(self._return_array('eyePos',element=1))))
+        out_dict.append(dict(name='Cursor',
+                             description='cursor pos on screen in x,y',
+                             data=np.concatenate(self._return_array('cursorPos', element=1))[:,:2]))
+        out_dict.append(dict(name='Hand',
+                             description='hand pos in x,y,z',
+                             data=np.concatenate(self._return_array('handPos', element=1))))
+        out_dict.append(dict(name='DecodePos',
+                             description='decoded pos in x,y',
+                             data=np.concatenate(self._return_array('decodePos', element=1))))
+        return out_dict
+
+    def extract_stimulus(self):
+        juice = np.concatenate([self.R[self.R['juice'][i][0]]['jc'][:int(self.R[self.R['trialLength'][i][0]][0, 0])]
+                    for i in range(self._no_trials)])
+        return juice
 
     def extract_task_data(self):
         out_dict = []
