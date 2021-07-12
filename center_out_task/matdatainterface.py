@@ -25,14 +25,15 @@ class COutMatDataInterface(BaseDataInterface):
 
     @classmethod
     def get_source_schema(cls):
-        base = super().get_source_schema()
-        base.update(
-            required=["filename"],
-            properties=dict(
-                filename=dict(type="string", format="file"),
-            ),
-        )
-        return base
+        return get_schema_from_method_signature(cls.__init__)
+        # base = super().get_source_schema()
+        # base.update(
+        #     required=["filename"],
+        #     properties=dict(
+        #         filename=dict(type="string", format="file"),
+        #     ),
+        # )
+        # return base
 
     @staticmethod
     def _convert_schema_object_to_array(schema_to_convert):
