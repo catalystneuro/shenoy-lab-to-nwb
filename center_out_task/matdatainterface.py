@@ -42,7 +42,6 @@ class COutMatDataInterface(BaseDataInterface):
                                        "Units", "Subject", "NWBFile"]
         metadata_schema["properties"] = dict()
         metadata_schema["properties"]["Behavior"] = get_base_schema()
-        metadata_schema["properties"]["Intervals"] = get_base_schema()
         metadata_schema["properties"]["NWBFile"] = get_schema_for_NWBFile()
         metadata_schema["properties"]["Intervals"] = get_schema_from_hdmf_class(TimeIntervals)
 
@@ -52,9 +51,6 @@ class COutMatDataInterface(BaseDataInterface):
             Position=self._convert_schema_object_to_array(
                 get_schema_from_hdmf_class(SpatialSeries)
             ),
-        )
-        metadata_schema["properties"]["Intervals"]["properties"] = dict(
-            Trials=dt_schema,
         )
         units_schema = get_schema_from_hdmf_class(Units)
         units_schema["additionalProperties"] = True
@@ -77,9 +73,7 @@ class COutMatDataInterface(BaseDataInterface):
                 ]
             ),
             Intervals=dict(
-                Trials=dict(
-                    name="trials", description="metadata about experimental trials"
-                )
+                    name="trials"
             ),
             Units=dict(name="units"),
         )
@@ -102,11 +96,11 @@ class COutMatDataInterface(BaseDataInterface):
         position_container = Position()
         spatial_series_list = []
         for beh in beh_pos:
-            args = beh.update(
+            args = dict(
                 timestamps=trial_times_all,
                 reference_frame="screen center",
                 conversion=np.nan)
-            spatial_series_list.append(position_container.create_spatial_series(**args))
+            spatial_series_list.append(position_container.create_spatial_series(**beh,**args))
         beh_mod.add(position_container)
         #add stimulus:
         nwbfile.add_stimulus(TimeSeries(name='juice_reward',
