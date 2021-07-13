@@ -12,6 +12,18 @@ from nwbwidgets.utils.timeseries import timeseries_time_to_ind
 app = dash.Dash(__name__)
 nwbfile = None
 
+
+def trialize_time_series(trials,time_series):
+    trl_ts = []
+    for trial_no in range(len(trials)):
+        start_id = timeseries_time_to_ind(time_series, trials['start_time'][trial_no])
+        stop_id = timeseries_time_to_ind(time_series, trials['stop_time'][trial_no])
+        nan_data = np.nan*np.ones(shape=time_series.data.shape[1])
+        data = np.vstack([time_series.data[start_id:stop_id], nan_data])
+        trl_ts.append(data)
+    return trl_ts
+
+
 app.layout = html.Div([
     html.H3("Display of task configurations for maze task"),
     html.Div(["NWB file location: ",
@@ -82,6 +94,7 @@ def draw_graphs(n_clicks,versions,types):
         cursor = nwbfile.processing['behavior'].data_interfaces['Position'].spatial_series['Cursor']
         trials_version_data = trials['trial_version'].data[()]
         trials_type_data = trials['trial_type'].data[()]
+        trialized_ts = trialize_time_series(trials,cursor)
         titles = [f'trial version {version}, trial type {type}'
                   for type in types for version in versions]
         fig = make_subplots(len(versions), len(types),
@@ -92,34 +105,47 @@ def draw_graphs(n_clicks,versions,types):
 
 
         #plot the barriers and targets for the given trial version and trial type:
-        for a, trl_ver in enumerate(versions):
-            for b,trl_type in enumerate(types):
-                if np.sum(np.logical_and(trials_version_data==trl_ver,trials_type_data==trl_type))>0:
-                    rel_row = np.where(np.logical_and(trials_version_data==trl_ver,trials_type_data==trl_type))[0][0]
-                    target_pos = trials['target_positions'][rel_row]
-                    barrier_pos = trials['barrier_info'][rel_row]
-                    target_size = trials['target_size'][rel_row]
-                    fig.add_trace(go.Scattergl(x=target_pos[:, 0], y=target_pos[:, 1],showlegend=False),
-                                  row=a+1,col=b+1)
-                    for bar in barrier_pos:
-                        fig.add_shape(type='rect',
-                                      x0=bar[0]-bar[3],y0=bar[1]-bar[2],
-                                      x1=bar[0]+bar[3],y1=bar[1]+bar[2],
-                                      fillcolor='black',
-                                      row=a+1,col=b+1)
-
+        tot_rows = len(versions)
+        tot_cols = len(types)
+        trial_rows = np.empty((tot_rows, tot_cols), dtype=object)
+        trial_rows.fill(np.array([]))
+        cursor_trajectory = np.empty((tot_rows, tot_cols), dtype=object)
+        cursor_trajectory.fill(np.nan*np.ones((1, cursor.data.shape[1])))
         for trial_no in range(len(trials)):
             if trials_version_data[trial_no] in versions and trials_type_data[trial_no] in types:
                 a = versions.index(trials_version_data[trial_no])
                 b = types.index(trials_type_data[trial_no])
-                start_id = timeseries_time_to_ind(cursor,trials['start_time'][trial_no])
-                stop_id = timeseries_time_to_ind(cursor, trials['stop_time'][trial_no])
-                cursor_trajectory_trial = cursor.data[start_id:stop_id]
-                fig.add_trace(go.Scattergl(x=cursor_trajectory_trial[:,0],
-                                           y=cursor_trajectory_trial[:,1],
+                trial_rows[a, b] = np.append(trial_rows[a, b], trial_no)
+                cursor_trajectory[a, b] = np.vstack([cursor_trajectory[a, b], trialized_ts[trial_no]])
+
+        for a in range(tot_rows):
+            for b in range(tot_cols):
+
+                trial_row = trial_rows[a, b][0]
+                # plot target positions:
+                target_pos = trials['target_positions'][trial_row]
+                target_size = trials['target_size'][trial_row]
+                fig.add_trace(go.Scattergl(x=target_pos[:, 0],
+                                           y=target_pos[:, 1],
+                                           showlegend=False,
+                                           mode='markers',
+                                           marker_size=target_size),
+                              row=a + 1, col=b + 1)
+                # plot barriers:
+                barrier_pos = trials['barrier_info'][trial_row]
+                for bar in barrier_pos:
+                    fig.add_shape(type='rect',
+                                  x0=bar[0] - bar[3], y0=bar[1] - bar[2],
+                                  x1=bar[0] + bar[3], y1=bar[1] + bar[2],
+                                  fillcolor='black',
+                                  row=a + 1, col=b + 1)
+                # plot trajectory:
+                fig.add_trace(go.Scattergl(x=cursor_trajectory[a, b][:, 0],
+                                           y=cursor_trajectory[a, b][:, 1],
                                            showlegend=False,
                                            line_color='red'),
-                              row=a+1,col=b+1)
+                              row=a + 1, col=b + 1)
+
         fig.update_layout(height=1000,width=1000)
     return fig
 
