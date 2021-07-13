@@ -80,19 +80,18 @@ class MatDataExtractor:
         return spike_times_all_list
 
     def extract_behavioral_position(self):
-        out_dict = []
-        out_dict.append(dict(name='Eye',
-                             description='pos of eye in x,y',
-                             data=np.concatenate(self._return_array('eyePos',element=1))))
-        out_dict.append(dict(name='Cursor',
-                             description='cursor pos on screen in x,y',
-                             data=np.concatenate(self._return_array('cursorPos', element=1))[:,:2]))
-        out_dict.append(dict(name='Hand',
-                             description='hand pos in x,y,z',
-                             data=np.concatenate(self._return_array('handPos', element=1))))
-        out_dict.append(dict(name='DecodePos',
-                             description='decoded pos in x,y',
-                             data=np.concatenate(self._return_array('decodePos', element=1))))
+        out_dict = [dict(name='Eye',
+                         description='pos of eye in x,y',
+                         data=np.concatenate(self._return_array('eyePos',element=1))),
+                    dict(name='Cursor',
+                         description='cursor pos on screen in x,y',
+                         data=np.concatenate(self._return_array('cursorPos', element=1))[:,:2]),
+                    dict(name='Hand',
+                         description='hand pos in x,y,z',
+                         data=np.concatenate(self._return_array('handPos', element=1))),
+                    dict(name='DecodePos',
+                         description='decoded pos in x,y',
+                         data=np.concatenate(self._return_array('decodePos', element=1)))]
         return out_dict
 
     def extract_stimulus(self):
@@ -101,35 +100,34 @@ class MatDataExtractor:
         return juice
 
     def extract_task_data(self):
-        out_dict = []
         trial_params = [self.R[self.R['startTrialParams'][i][0]] for i in range(self._no_trials)]
-        out_dict.append(dict(name='is_successful',
+        out_dict=[dict(name='is_successful',
                              description='if target was acquired',
-                             data=self._return_array('isSuccessful')))
-        out_dict.append(dict(name='task_type',
+                             data=self._return_array('isSuccessful')),
+                    dict(name='task_type',
                              description='which target configuration',
-                             data=[trlparams['taskID'][0,0] for trlparams in trial_params]))
-        out_dict.append(dict(name='time_reach',
-                             description='max time to reach the target',
-                             data=[trlparams['timeReach'][0, 0] for trlparams in trial_params]))
-        out_dict.append(dict(name='time_target_hold',
-                             description='min time required to have successfully acquired the target',
-                             data=[trlparams['timeTargetHold'][0, 0] for trlparams in trial_params]))
-        out_dict.append(dict(name='time_fail',
-                             description='time limit to target reach failure',
-                             data=[trlparams['timeFail'][0, 0] for trlparams in trial_params]))
-        out_dict.append(dict(name='target_pos',
-                             description='position of target on screen',
-                             data=[trlparams['posTarget'][()].squeeze() for trlparams in trial_params],
-                             index=True))
-        out_dict.append(dict(name='target_size',
-                             description='target size',
-                             data=[trlparams['sizeTarget'][()].squeeze() for trlparams in trial_params],
-                             index=True))
-        out_dict.append(dict(name='barrier_points',
-                             description='barrier points location',
-                             data=[trlparams['barrierPoints'][()].squeeze() for trlparams in trial_params],
-                             index=True))
+                             data=[trlparams['taskID'][0,0] for trlparams in trial_params]),
+                    dict(name='reach_time',
+                                         description='max time to reach the target',
+                                         data=[trlparams['timeReach'][0, 0] for trlparams in trial_params]),
+                    dict(name='target_hold_time',
+                                         description='min time required to have successfully acquired the target',
+                                         data=[trlparams['timeTargetHold'][0, 0] for trlparams in trial_params]),
+                    dict(name='fail_time',
+                                         description='time limit to target reach failure',
+                                         data=[trlparams['timeFail'][0, 0] for trlparams in trial_params]),
+                    dict(name='target_pos',
+                                         description='position of target on screen',
+                                         data=[trlparams['posTarget'][()].squeeze() for trlparams in trial_params],
+                                         index=True),
+                    dict(name='target_size',
+                                         description='target size',
+                                         data=[trlparams['sizeTarget'][()].squeeze() for trlparams in trial_params],
+                                         index=True),
+                    dict(name='barrier_points',
+                                         description='barrier points location',
+                                         data=[trlparams['barrierPoints'][()].squeeze() for trlparams in trial_params],
+                                         index=True)]
         return out_dict
 
 
