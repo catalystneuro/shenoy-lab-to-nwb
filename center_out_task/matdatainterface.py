@@ -4,7 +4,7 @@ from typing import Union
 from nwb_conversion_tools import NWBConverter
 from nwb_conversion_tools.basedatainterface import BaseDataInterface
 from nwb_conversion_tools.utils.json_schema import (
-    get_base_schema, get_schema_from_hdmf_class, get_schema_for_NWBFile)
+    get_base_schema, get_schema_from_hdmf_class, get_schema_for_NWBFile, get_schema_from_method_signature)
 from pynwb import NWBFile, TimeSeries
 from pynwb.behavior import Position, SpatialSeries
 from pynwb.misc import Units
