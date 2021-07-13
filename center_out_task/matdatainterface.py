@@ -4,8 +4,9 @@ from typing import Union
 from nwb_conversion_tools import NWBConverter
 from nwb_conversion_tools.basedatainterface import BaseDataInterface
 from nwb_conversion_tools.utils.json_schema import (
-    get_base_schema, get_schema_from_hdmf_class, get_schema_for_NWBFile)
+    get_base_schema, get_schema_from_hdmf_class, get_schema_for_NWBFile, get_schema_from_method_signature)
 from pynwb import NWBFile, TimeSeries
+from pynwb.epoch import TimeIntervals
 from pynwb.behavior import Position, SpatialSeries
 from pynwb.misc import Units
 from .matextractor import MatDataExtractor
@@ -26,14 +27,6 @@ class COutMatDataInterface(BaseDataInterface):
     @classmethod
     def get_source_schema(cls):
         return get_schema_from_method_signature(cls.__init__)
-        # base = super().get_source_schema()
-        # base.update(
-        #     required=["filename"],
-        #     properties=dict(
-        #         filename=dict(type="string", format="file"),
-        #     ),
-        # )
-        # return base
 
     @staticmethod
     def _convert_schema_object_to_array(schema_to_convert):
@@ -51,7 +44,7 @@ class COutMatDataInterface(BaseDataInterface):
         metadata_schema["properties"]["Behavior"] = get_base_schema()
         metadata_schema["properties"]["Intervals"] = get_base_schema()
         metadata_schema["properties"]["NWBFile"] = get_schema_for_NWBFile()
-        metadata_schema["properties"]["Intervals"] = get_schema_from_hdmf_class(Subject)
+        metadata_schema["properties"]["Intervals"] = get_schema_from_hdmf_class(TimeIntervals)
 
         dt_schema = get_base_schema(DynamicTable)
         dt_schema["additionalProperties"] = True
