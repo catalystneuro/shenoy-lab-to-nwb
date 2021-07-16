@@ -45,14 +45,16 @@ class MazeTaskWidget(widgets.VBox):
         self.plot_button = widgets.Button(
             description='Click to plot'
         )
-        self.figure = go.FigureWidget()
         self.progress = widgets.FloatProgress(value=0.0, min=0.0, max=1.0, disabled=True)
         self.plot_button.on_click(self.plot_trials_async)
+        self.set_children(go.FigureWidget())
+        
+    def set_children(self,fig):
         self.children = [widgets.HBox(children=(self.trial_type_dd,
-                                               self.trial_version_dd)),
+                                                self.trial_version_dd)),
                          self.plot_button,
                          self.progress,
-                         self.figure]
+                         fig]
 
     def trialize_time_series(self):
         trl_ts = []
@@ -85,24 +87,25 @@ class MazeTaskWidget(widgets.VBox):
         th.start()
 
     def plot_trials(self):
-        self.figure = go.FigureWidget() if len(self.figure.data)>0 else self.figure
-        titles = [f'trial version {version},\ntrial type {type}'
+        titles = [f'version {version},type {type}'
                   for type in self.types for version in self.versions]
-        tot_rows = len(self.versions)
-        tot_cols = len(self.types)
-        self.figure.set_subplots(tot_rows,tot_cols,
-                            shared_xaxes=False,
-                            shared_yaxes=False,
-                            subplot_titles=titles)
-        self.figure.update_layout(autosize=True, width=700, height=700)
+        tot_rows = len(self.types)
+        tot_cols = len(self.versions)
+        fig = go.FigureWidget()
+        fig.set_subplots(tot_rows,tot_cols,
+                         shared_xaxes=False,
+                         shared_yaxes=False,
+                         subplot_titles=titles,
+                         horizontal_spacing=0.2)
+        fig.update_layout(autosize=True,height=350*tot_rows)
         trial_rows = np.empty((tot_rows,tot_cols),dtype=object)
         trial_rows.fill(np.array([]))
         cursor_trajectory = np.empty((tot_rows,tot_cols),dtype=object)
         cursor_trajectory.fill(np.nan*np.ones((1,self.time_series.data.shape[1])))
         for trial_no in range(len(self.trials)):
             if self.trials_version_data[trial_no] in self.versions and self.trials_type_data[trial_no] in self.types:
-                a = self.versions.index(self.trials_version_data[trial_no])
-                b = self.types.index(self.trials_type_data[trial_no])
+                b = self.versions.index(self.trials_version_data[trial_no])
+                a = self.types.index(self.trials_type_data[trial_no])
                 trial_rows[a,b] = np.append(trial_rows[a,b], trial_no)
                 cursor_trajectory[a,b] = np.vstack([cursor_trajectory[a,b], self.trialized_ts[trial_no]])
 
@@ -117,26 +120,30 @@ class MazeTaskWidget(widgets.VBox):
                 #plot target positions:
                 target_pos = self.trials['target_positions'][trial_row]
                 target_size = self.trials['target_size'][trial_row]
-                self.figure.add_trace(go.Scattergl(x=target_pos[:, 0],
-                                                   y=target_pos[:, 1],
-                                                   showlegend=False,
-                                                   mode='markers',
-                                                   marker_size=target_size),
+                fig.add_trace(go.Scattergl(x=target_pos[:, 0],
+                                           y=target_pos[:, 1],
+                                           showlegend=False,
+                                           mode='markers',
+                                           marker_size=target_size),
                                       row=a + 1, col=b + 1)
                 #plot barriers:
                 barrier_pos = self.trials['barrier_info'][trial_row]
                 for bar in barrier_pos:
-                    self.figure.add_shape(type='rect',
-                                          x0=bar[0] - bar[3], y0=bar[1] - bar[2],
-                                          x1=bar[0] + bar[3], y1=bar[1] + bar[2],
-                                          fillcolor='black',
-                                          row=a + 1, col=b + 1)
+                    fig.add_shape(type='rect',
+                                  x0=bar[0] - bar[3], y0=bar[1] - bar[2],
+                                  x1=bar[0] + bar[3], y1=bar[1] + bar[2],
+                                  fillcolor='black',
+                                  row=a + 1, col=b + 1)
                 #plot trajectory:
-                self.figure.add_trace(go.Scattergl(x=cursor_trajectory[a,b][:, 0],
-                                                   y=cursor_trajectory[a,b][:, 1],
-                                                   showlegend=False,
-                                                   line_color='red'),
+                fig.add_trace(go.Scattergl(x=cursor_trajectory[a,b][:, 0],
+                                           y=cursor_trajectory[a,b][:, 1],
+                                           showlegend=False,
+                                           line_color='red'),
                                       row=a + 1, col=b + 1)
+                fig.update_xaxes(constrain='domain',row=a + 1, col=b + 1)
+                x_str = 'x' if a == 0 and b == 0 else f'x{tot_cols*(a) + (b+1)}'
+                fig.update_yaxes(scaleanchor=x_str, scaleratio=1, row=a+1, col=b+1)
+        self.set_children(fig)
 
 
 def load_maze_task_widget(node):
