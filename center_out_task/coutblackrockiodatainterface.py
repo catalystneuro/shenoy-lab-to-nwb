@@ -1,20 +1,33 @@
 from pathlib import Path
-import numpy as np
 from typing import Union
-from nwb_conversion_tools import NWBConverter
-from nwb_conversion_tools.basedatainterface import BaseDataInterface
-from neo import BlackrockIO
+from nwb_conversion_tools import BlackrockRecordingExtractorInterface
 
 PathType = Union[str, Path]
 
 
-class COutBlackrockIODataInterface(BaseDataInterface):
-    def __init__(self, file_name: Path):
-        self.file_path = Path(file_name)
-        assert self.file_path.suffix == ".nsx", "file_path should be a .ns3"
-        assert self.file_path.exists(), "file_path does not exist"
-        self.blackrock_io = BlackrockIO('',nsx_override=self.file_path)
-        self.electrode_group = self.file_path.parent.name
+class COutBlackrockIODataInterface(BlackrockRecordingExtractorInterface):
+
+    def __init__(self, nsx_override: PathType, filename: PathType = ''):
+        self.nsx_loc = Path(nsx_override)
+        super().__init__(filename=filename, nsx_override=nsx_override)
+        if "M1" in self.nsx_loc.parent.name:
+            self._region = 'M1 Motor Cortex'
+            self.recording_extractor._channel_ids = [
+                i + 96 for i in self.recording_extractor._channel_ids
+            ]
+            self.recording_extractor.set_channel_groups([2]*96)
+        elif "PMd" in self.nsx_loc.parent.name:
+            self._region = 'Pre-Motor Cortex, dorsal'
+            self.recording_extractor.set_channel_groups([1]*96)
+        self.recording_extractor.clear_channels_property("name")
+        for chan_id in self.recording_extractor.get_channel_ids():
+            self.recording_extractor.set_channel_property(chan_id, 'filtering', '2000Hz')
+            self.recording_extractor.set_channel_property(chan_id, 'brain_area', self._region)
+
+    def get_metadata_schema(self):
+        metadata_schema = super().get_metadata_schema()
+        metadata_schema['properties']['Ecephys']['additionalProperties'] = True
+        return metadata_schema
 
     def get_metadata(self):
         metadata = dict(
@@ -23,13 +36,14 @@ class COutBlackrockIODataInterface(BaseDataInterface):
                 ElectrodeGroup=[],
             )
         )
+        ephys_name = self.nsx_loc.parent.stem+'_'+self.nsx_loc.stem[-1]
         metadata["Ecephys"].update(
             {
-                f"ElectricalSeries{self.nsx_loc.stem[-4:]}": dict(
-                    name=self.nsx_loc.stem[-4:],
-                    description=f"LFP signal for array {self.nsx_loc.stem[8]}, segment {self.nsx_loc.stem[-1]}"
-                    f"data for both arrays A,B in the same segment should be, but is not of the same time length"
-                    f"and cannot be synced due to lack of time stamps. Ignore the starting times.",
+                f"ElectricalSeries_{ephys_name}": dict(
+                    name=ephys_name,
+                    description=f"LFP signal for array {ephys_name}, segment {self.nsx_loc.stem[-1]}"
+                                f"data for both arrays A,B in the same segment should be, but is not of the same time length"
+                                f"and cannot be synced due to lack of time stamps. Ignore the starting times.",
                 )
             }
         )
