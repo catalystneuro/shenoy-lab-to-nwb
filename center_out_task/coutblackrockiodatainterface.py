@@ -12,13 +12,13 @@ class COutBlackrockIODataInterface(BlackrockRecordingExtractorInterface):
         super().__init__(filename=filename, nsx_override=nsx_override)
         if "M1" in self.nsx_loc.parent.name:
             self._region = 'M1 Motor Cortex'
+            self.recording_extractor.set_channel_groups([1]*96)
+        elif "PMd" in self.nsx_loc.parent.name:
+            self._region = 'Pre-Motor Cortex, dorsal'
+            self.recording_extractor.set_channel_groups([2]*96)
             self.recording_extractor._channel_ids = [
                 i + 96 for i in self.recording_extractor._channel_ids
             ]
-            self.recording_extractor.set_channel_groups([2]*96)
-        elif "PMd" in self.nsx_loc.parent.name:
-            self._region = 'Pre-Motor Cortex, dorsal'
-            self.recording_extractor.set_channel_groups([1]*96)
         self.recording_extractor.clear_channels_property("name")
         for chan_id in self.recording_extractor.get_channel_ids():
             self.recording_extractor.set_channel_property(chan_id, 'filtering', '2000Hz')
@@ -61,13 +61,13 @@ class COutBlackrockIODataInterface(BlackrockRecordingExtractorInterface):
         ]
         metadata["Ecephys"]["ElectrodeGroup"] = [
             dict(
-                name="1",
+                name="2",
                 description="array corresponding to device implanted at PMd",
                 location="Caudal, dorsal Pre-motor cortex, Left hemisphere",
                 device="Utah Array(PMd)",
             ),
             dict(
-                name="2",
+                name="1",
                 description="array corresponding to device implanted at M1",
                 location="M1 in Motor Cortex, left hemisphere",
                 device="Utah Array(M1)",
