@@ -24,6 +24,13 @@ class COutBlackrockIODataInterface(BlackrockRecordingExtractorInterface):
             self.recording_extractor.set_channel_property(chan_id, 'filtering', '2000Hz')
             self.recording_extractor.set_channel_property(chan_id, 'brain_area', self._region)
 
+    @classmethod
+    def get_source_schema(cls):
+        source_schema = super().get_source_schema()
+        source_schema['properties']['nsx_override']['format'] = 'file'
+        source_schema['properties']['nsx_override']['description'] = 'Path to Blackrock file.'
+        return source_schema
+
     def get_metadata_schema(self):
         metadata_schema = super().get_metadata_schema()
         metadata_schema['properties']['Ecephys']['additionalProperties'] = True

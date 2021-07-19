@@ -1,4 +1,4 @@
-from .coutnwbconverter import COutNWBConverter
+from coutnwbconverter import COutNWBConverter
 from pathlib import Path
 
 
@@ -17,10 +17,11 @@ def convert(source_folder):
         else:
             array = "B"
         arg_name = array+nsx_file.stem[-1]
-        source_data.update({arg_name:nsx_file})
+        source_data.update({arg_name:dict(filename='',nsx_override=str(nsx_file))})
         conversion_options.update({arg_name:dict(
             es_key=f"ElectricalSeries_{nsx_file.parent.stem+'_'+nsx_file.stem[-1]}")})
-    source_data.update(Mat=mat_file,Movie=movie_file)
+    source_data.update(Mat=dict(filename=str(mat_file)),
+                       Movie=dict(movie_filepath=str(movie_file)))
 
 
     ch = COutNWBConverter(source_data)
