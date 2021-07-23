@@ -125,6 +125,19 @@ class COutMatDataInterface(BaseDataInterface):
                 timeseries=spatial_series_list,
             )
             nwbfile.add_trial(**col_details_dict)
+
+        if len(nwbfile.devices)==0:
+            nwbfile.create_device(name="Utah Electrode", description='192 channels microelectrode array')
+        if len(nwbfile.electrode_groups)==0:
+            # add electrdoe groups:
+            nwbfile.create_electrode_group(name="1",
+                                           description="array corresponding to device implanted at PMd",
+                                           location="Caudal, dorsal Pre-motor cortex, Left hemisphere",
+                                           device=nwbfile.devices["Utah Electrode"])
+            nwbfile.create_electrode_group(name="2",
+                                           description="array corresponding to device implanted at M1",
+                                           location="M1 in Motor Cortex, left hemisphere",
+                                           device=nwbfile.devices["Utah Electrode"])
         # add units:
         for no,unit_sp_times in enumerate(spike_times):
             elec_group = 1 if no>95 else 0
