@@ -8,7 +8,6 @@ def convert(source_folder):
     movie_file = list(source_folder.glob("**/*.avi"))[0]
     mat_file = list(source_folder.glob("**/R*.mat"))[0]
 
-    assert len(nsx_files) >=2, "at least 2 ns2 files need to be present"
     source_data = dict()
     conversion_options = dict()
     for nsx_file in nsx_files:
@@ -22,10 +21,10 @@ def convert(source_folder):
             es_key=f"ElectricalSeries_{nsx_file.parent.stem+'_'+nsx_file.stem[-1]}")})
     source_data.update(Mat=dict(filename=str(mat_file)),
                        Movie=dict(movie_filepath=str(movie_file)))
-
+    conversion_options.update(Movie=dict(external_mode=True))
 
     ch = COutNWBConverter(source_data)
-    nwbfile_saveloc = source_folder / f"{source_folder.name}_nwb.nwb"
+    nwbfile_saveloc = source_folder / f"{source_folder.name}_nwb_v2.nwb"
 
     print("running conversion to nwb...")
     ch.run_conversion(
@@ -37,6 +36,6 @@ def convert(source_folder):
     print(f'converted for {source_folder}')
 
 source_folder = Path(
-    r"C:\Users\Saksham\Documents\NWB\shenoy\data\centerOut\24TargetCenterOut\2015-10-09"
+    r"C:\Users\Saksham\Documents\NWB\shenoy\data\centerOut\3Ring\2016-01-28 (1)"
 )
 convert(source_folder)
