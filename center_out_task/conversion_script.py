@@ -1,4 +1,4 @@
-from coutnwbconverter import COutNWBConverter
+from .coutnwbconverter import COutNWBConverter
 from pathlib import Path
 
 
@@ -35,7 +35,9 @@ def convert(source_folder):
     )
     print(f'converted for {source_folder}')
 
-source_folder = Path(
-    r"C:\Users\Saksham\Documents\NWB\shenoy\data\centerOut\3Ring\2016-01-28 (1)"
-)
-convert(source_folder)
+if __name__ == '__main__':
+
+    source_folder = Path(
+        r"C:\Users\Saksham\Documents\NWB\shenoy\data\centerOut\3Ring\2016-01-28 (1)"
+    )
+    convert(source_folder)

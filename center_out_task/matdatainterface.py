@@ -9,7 +9,7 @@ from pynwb import NWBFile, TimeSeries
 from pynwb.epoch import TimeIntervals
 from pynwb.behavior import Position, SpatialSeries
 from pynwb.misc import Units
-from matextractor import MatDataExtractor
+from .matextractor import MatDataExtractor
 from pynwb.base import DynamicTable
 from pynwb.file import Subject
 

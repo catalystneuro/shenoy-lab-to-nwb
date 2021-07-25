@@ -1,7 +1,7 @@
 from nwb_conversion_tools import NWBConverter
-from coutblackrockiodatainterface import COutBlackrockIODataInterface
-from matdatainterface import COutMatDataInterface
-from coutmoviedatainterface import CoutMoviedataInterface
+from .coutblackrockiodatainterface import COutBlackrockIODataInterface
+from .matdatainterface import COutMatDataInterface
+from .coutmoviedatainterface import CoutMoviedataInterface
 from pathlib import Path
 import uuid
 import pytz
