@@ -24,7 +24,7 @@ def convert(source_folder):
     conversion_options.update(Movie=dict(external_mode=True))
 
     ch = COutNWBConverter(source_data)
-    nwbfile_saveloc = source_folder / f"{source_folder.name}_nwb_v2.nwb"
+    nwbfile_saveloc = source_folder / f"{source_folder.name}_nwb_v3.nwb"
 
     print("running conversion to nwb...")
     ch.run_conversion(

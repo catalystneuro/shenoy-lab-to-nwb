@@ -107,7 +107,7 @@ class MatDataExtractor:
                          data=self._return_array('isSuccessful')),
                     dict(name='task_type',
                          description='which target configuration',
-                         data=[trlparams['taskID'][0, 0]*1e-3 for no, trlparams in
+                         data=[trlparams['taskID'][0, 0] for no, trlparams in
                                enumerate(trial_params)]),
                     dict(name='reach_time',
                          description='max time to reach the target',
