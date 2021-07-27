@@ -1,5 +1,7 @@
 from nwb_conversion_tools import NWBConverter
+from .coutblackrockiodatainterface import COutBlackrockIODataInterface
 from .matdatainterface import COutMatDataInterface
+from .coutmoviedatainterface import CoutMoviedataInterface
 from pathlib import Path
 import uuid
 import pytz
@@ -9,7 +11,16 @@ from nwb_conversion_tools.utils.json_schema import dict_deep_update
 
 class COutNWBConverter(NWBConverter):
     data_interface_classes = dict(
+        A1=COutBlackrockIODataInterface,
+        B1=COutBlackrockIODataInterface,
+        A2=COutBlackrockIODataInterface,
+        B2=COutBlackrockIODataInterface,
+        A3=COutBlackrockIODataInterface,
+        B3=COutBlackrockIODataInterface,
+        A4=COutBlackrockIODataInterface,
+        B4=COutBlackrockIODataInterface,
         Mat=COutMatDataInterface,
+        Movie=CoutMoviedataInterface,
     )
 
     def __init__(self, source_data):

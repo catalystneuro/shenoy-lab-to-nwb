@@ -103,11 +103,15 @@ class MatDataExtractor:
         trial_times = self.get_trial_times()
         trial_params = [self.R[self.R['startTrialParams'][i][0]] for i in range(self._no_trials)]
         out_dict = [dict(name='is_successful',
-                         description='if target was acquired',
+                         description='if monkey started before the mandatory delay period after target shown',
                          data=self._return_array('isSuccessful')),
-                    dict(name='task_type',
+                    dict(name='task_id',
                          description='which target configuration',
-                         data=[trial_times[no][0] + trlparams['taskID'][0, 0]*1e-3 for no, trlparams in
+                         data=[trlparams['taskID'][0, 0] for no, trlparams in
+                               enumerate(trial_params)]),
+                    dict(name='version_id',
+                         description='which target version',
+                         data=[trlparams['versionID'][0, 0] for no, trlparams in
                                enumerate(trial_params)]),
                     dict(name='reach_time',
                          description='max time to reach the target',
@@ -140,11 +144,13 @@ class MatDataExtractor:
         time_target_on = []
         time_target_acquire = []
         time_target_held = []
+        time_target_shown = []
         for i in range(self._no_trials):
             trial_start = trial_times[i][0]
             target_acquire = self.R[self.R['timeTargetAcquire'][i][0]]
             target_on = self.R[self.R['timeTargetOn'][i][0]]
             target_held = self.R[self.R['timeTargetHeld'][i][0]]
+            delay_time = self.R[self.R['delayTime'][i][0]][0,0]
             if len(target_acquire.shape) > 1:
                 if target_acquire.shape == (1, 1):
                     time_target_acquire.append([target_acquire[0, 0]/1e3 + trial_start])
@@ -160,15 +166,22 @@ class MatDataExtractor:
                 time_target_on.append(target_on[0, 0]/1e3 + trial_start)
             else:
                 time_target_on.append(np.nan)
-        out_dict = [dict(name='target_on_time',
-                         description='time when target was shown on screen',
+            if np.isnan(delay_time):
+                time_target_shown.append(time_target_on[-1])
+            else:
+                time_target_shown.append(time_target_on[-1] - delay_time/1e3)
+        out_dict = [dict(name='go_cue_time',
+                         description='time when the go cue was given',
                          data=time_target_on),
                     dict(name='target_acquire_time',
                          description='time when target was acquired by monkey',
                          data=time_target_acquire,
                          index=True),
                     dict(name='target_held_time',
-                         description='time for which target was held by monkey',
-                         data=time_target_held)
+                         description='time until which target was held by monkey',
+                         data=time_target_held),
+                    dict(name='target_shown_time',
+                         description='time when target was shown but before the go cue was given',
+                         data=time_target_shown)
                     ]
         return out_dict
