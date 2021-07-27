@@ -105,9 +105,13 @@ class MatDataExtractor:
         out_dict = [dict(name='is_successful',
                          description='if monkey started before the mandatory delay period after target shown',
                          data=self._return_array('isSuccessful')),
-                    dict(name='task_type',
+                    dict(name='task_id',
                          description='which target configuration',
                          data=[trlparams['taskID'][0, 0] for no, trlparams in
+                               enumerate(trial_params)]),
+                    dict(name='version_id',
+                         description='which target version',
+                         data=[trlparams['versionID'][0, 0] for no, trlparams in
                                enumerate(trial_params)]),
                     dict(name='reach_time',
                          description='max time to reach the target',
