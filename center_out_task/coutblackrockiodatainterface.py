@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Union
+import numpy as np
 from nwb_conversion_tools import BlackrockRecordingExtractorInterface
 
 PathType = Union[str, Path]
@@ -10,6 +11,9 @@ class COutBlackrockIODataInterface(BlackrockRecordingExtractorInterface):
     def __init__(self, nsx_override: PathType, filename: PathType = ''):
         self.nsx_loc = Path(nsx_override)
         super().__init__(filename=filename, nsx_override=nsx_override)
+        if self.nsx_loc.stem[-1]!='1':
+            self.recording_extractor.set_times(
+                np.nan*np.ones((self.recording_extractor.get_num_frames(),)))
         if "M1" in self.nsx_loc.parent.name:
             self._region = 'M1 Motor Cortex'
             self.recording_extractor.set_channel_groups([1]*96)
