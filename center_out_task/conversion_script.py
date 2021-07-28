@@ -1,6 +1,7 @@
 from .coutnwbconverter import COutNWBConverter
 from pathlib import Path
 from joblib import Parallel, delayed
+import cv2
 
 def convert(source_folder):
 # retrieve the correct files from source path:
@@ -22,8 +23,11 @@ def convert(source_folder):
             write_as='lfp')})
     source_data.update(Mat=dict(filename=str(mat_file)))
     if len(movie_file)>0:
-        source_data.update(Movie=dict(movie_filepath=str(movie_file[0])))
-        conversion_options.update(Movie=dict(external_mode=True))
+        cap = cv2.VideoCapture(str(movie_file[0]))
+        success, _ = cap.read()
+        if success:
+            source_data.update(Movie=dict(movie_filepath=str(movie_file[0])))
+            conversion_options.update(Movie=dict(external_mode=True))
 
     ch = COutNWBConverter(source_data)
     nwbfile_saveloc = source_folder / f"{source_folder.name}_nwb_v4.nwb"
