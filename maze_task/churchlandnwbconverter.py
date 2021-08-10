@@ -1,6 +1,6 @@
 from nwb_conversion_tools import NWBConverter
-from shenoymatdatainterface import ShenoyMatDataInterface
-from shenoyblackrockrecordingdatainterface import ShenoyBlackRockRecordingDataInterface
+from .shenoymatdatainterface import ShenoyMatDataInterface
+from .shenoyblackrockrecordingdatainterface import ShenoyBlackRockRecordingDataInterface
 from pathlib import Path
 import uuid
 import pytz

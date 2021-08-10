@@ -1,4 +1,4 @@
-from churchlandnwbconverter import ChurchlandNWBConverter
+from .churchlandnwbconverter import ChurchlandNWBConverter
 from pathlib import Path
 import pytz
 from datetime import datetime
@@ -38,7 +38,7 @@ def convert(source_folder):
         source_data.update({arg_names[no]: dict(filename=filename)})
 
     ch = ChurchlandNWBConverter(source_data)
-    nwbfile_saveloc = source_folder / f"{source_folder.name}_nwb_v3.nwb"
+    nwbfile_saveloc = source_folder / f"{source_folder.name}_nwb_vlatest.nwb"
     conversion_options = {arg_names[no]:dict(es_key=f"ElectricalSeries{Path(i).stem[-4:]}")
                           for no, i in enumerate(nsx_list)}
 
@@ -51,8 +51,10 @@ def convert(source_folder):
     )
     print(f'converted for {source_folder}')
 
-source_folder = Path(
-    r"C:\Users\Saksham\Documents\NWB\shenoy\data\Nitschke\spikesorted"
-)
-for no, folder in enumerate(source_folder.iterdir()):
-    convert(folder)
+
+if __name__ == '__main__':
+    source_folder = Path(
+        r"C:\Users\Saksham\Documents\NWB\shenoy\data\Nitschke\spikesorted"
+    )
+    for no, folder in enumerate(source_folder.iterdir()):
+        convert(folder)
