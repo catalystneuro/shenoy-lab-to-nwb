@@ -48,7 +48,7 @@ class ChurchlandNWBConverter(NWBConverter):
             experimenter=["Matthew T. Kaufman", "Mark M. Churchland"],
             experiment_description="",
             institution="Stanford University",
-            related_publications=[
+            related_publications=' '.join([
                 "10.1038/nature11129",
                 "10.1152/jn.00892.2011",
                 "10.1038/nn.3643",
@@ -57,7 +57,7 @@ class ChurchlandNWBConverter(NWBConverter):
                 "10.7554/eLife.04677"""
                 "10.1523/ENEURO.0085-16.2016",
                 "10.1038/s41592-018-0109-9"
-            ],
+            ]),
         )
         metadata_base["Subject"] = dict(
             sex="M", species="Macaca mulatta", subject_id=self.subject_name
