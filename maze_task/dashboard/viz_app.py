@@ -7,10 +7,35 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
 from nwbwidgets.utils.timeseries import timeseries_time_to_ind
+import dash_labs as dl
+from uuid import uuid4
+import diskcache
+from flask_caching import Cache
 
+## Diskcache
+import diskcache
+launch_uid = uuid4()
+cache = diskcache.Cache("./cache")
+long_callback_manager = dl.plugins.DiskcacheCachingCallbackManager(
+    cache, cache_by=[lambda: launch_uid], expire=60,
+)
 
-app = dash.Dash(__name__)
-nwbfile = None
+app = dash.Dash(
+    __name__,
+    plugins=[
+        dl.plugins.FlexibleCallbacks(),
+        dl.plugins.HiddenComponents(),
+        dl.plugins.LongCallback(long_callback_manager),
+    ],
+)
+
+CACHE_CONFIG = {
+    # try 'filesystem' if you don't want to setup redis
+    'CACHE_TYPE': 'filesystem',
+    'CACHE_DIR': 'cache-directory',
+}
+cache = Cache()
+cache.init_app(app.server, config=CACHE_CONFIG)
 
 
 def trialize_time_series(trials,time_series):
@@ -48,48 +73,80 @@ app.layout = html.Div([
         html.Button(
             id='submit-button-state',
             n_clicks=0,
-            children='Submit')
+            children='Submit',
+            disabled=True),
+        html.Button(
+            id='cancel-button-state',
+            n_clicks=0,
+            children='Cancel Plot',
+            disabled=True),
+        html.Progress(id="progress_bar_extraction"),
+        # html.Progress(id="progress_bar_plotting")
     ]),
-    dcc.Graph(id="trial-subplots")
-
+    dcc.Graph(id="trial-subplots"),
 ])
 
 
+@cache.memoize()
+def global_store(fileloc):
+    try:
+        io = NWBHDF5IO(str(fileloc), 'r')
+        nwbfile = io.read()
+        version_ops = [dict(label=str(i), value=i)
+                       for i in set(nwbfile.trials['trial_version'].data)]
+        type_ops = [dict(label=str(i), value=i)
+                    for i in set(nwbfile.trials['trial_type'].data)]
+    except Exception as e:
+        return None, [], []
+    return nwbfile, version_ops, type_ops
+
+
 @app.callback(
-    Output('trial-version-dropdown','options'),
-    Output('trial-type-dropdown','options'),
-    Output('trial-version-dropdown','disabled'),
-    Output('trial-type-dropdown','disabled'),
-    Input('nwb-input','value')
+    output=(
+        dl.Output('trial-version-dropdown','options'),
+        dl.Output('trial-type-dropdown','options'),
+        dl.Output('trial-version-dropdown','disabled'),
+        dl.Output('trial-type-dropdown','disabled'),
+    ),
+    args=(
+        dl.Input('nwb-input','value'),
+    )
 )
 def open_nwb(fileloc):
     if fileloc:
-        print(fileloc)
-        global nwbfile
         try:
-            io = NWBHDF5IO(str(fileloc),'r')
+            io = NWBHDF5IO(str(fileloc), 'r')
             nwbfile = io.read()
-            version_ops = [dict(label=str(i),value=i)
+            version_ops = [dict(label=str(i), value=i)
                            for i in set(nwbfile.trials['trial_version'].data)]
             type_ops = [dict(label=str(i), value=i)
-                           for i in set(nwbfile.trials['trial_type'].data)]
+                        for i in set(nwbfile.trials['trial_type'].data)]
+            return (version_ops, type_ops, False, False)
         except Exception as e:
-            return [],[],True,True
-        return version_ops, type_ops, False, False
-    else:
-        return [],[],True,True
+            print(e)
+    return ([],[], True,True)
 
 
-@app.callback(
-    Output('trial-subplots','figure'),
-    Input('submit-button-state','n_clicks'),
-    State('trial-version-dropdown','value'),
-    State('trial-type-dropdown','value')
+@app.long_callback(
+    output=dl.Output('trial-subplots','figure'),
+    args=(dl.Input('submit-button-state','n_clicks'),
+          dl.State('nwb-input','value'),
+          dl.State('trial-version-dropdown','value'),
+          dl.State('trial-type-dropdown','value')),
+    running=[
+        (dl.Output("submit-button-state", "disabled"), True, False),
+        (dl.Output("cancel-button-state", "disabled"), False, True),
+    ],
+    cancel=[dl.Input("cancel-button-state", "n_clicks")],
+    progress=dl.Output("progress_bar_extraction", ("value", "max"))
+              # dl.Output("progress_bar_plotting", ("value", "max")))
 )
-def draw_graphs(n_clicks,versions,types):
-    fig = go.Figure()
-    global nwbfile
-    if nwbfile is not None:
+def draw_graphs(set_progress,args):
+    n_clicks, fileloc, versions, types = args
+    print('long callback run')
+    if versions is not None and types is not None:
+        io = NWBHDF5IO(str(fileloc), 'r')
+        nwbfile = io.read()
         trials = nwbfile.trials
         cursor = nwbfile.processing['behavior'].data_interfaces['Position'].spatial_series['Cursor']
         trials_version_data = trials['trial_version'].data[()]
@@ -108,21 +165,25 @@ def draw_graphs(n_clicks,versions,types):
         tot_rows = len(versions)
         tot_cols = len(types)
         trial_rows = np.empty((tot_rows, tot_cols), dtype=object)
-        trial_rows.fill(np.array([]))
+        trial_rows.fill(np.array([],dtype=int))
         cursor_trajectory = np.empty((tot_rows, tot_cols), dtype=object)
         cursor_trajectory.fill(np.nan*np.ones((1, cursor.data.shape[1])))
         for trial_no in range(len(trials)):
+            # set_progress((str(trial_no + 1), str(len(trials))),('0',str(tot_rows+tot_cols)))
             if trials_version_data[trial_no] in versions and trials_type_data[trial_no] in types:
                 a = versions.index(trials_version_data[trial_no])
                 b = types.index(trials_type_data[trial_no])
                 trial_rows[a, b] = np.append(trial_rows[a, b], trial_no)
                 cursor_trajectory[a, b] = np.vstack([cursor_trajectory[a, b], trialized_ts[trial_no]])
-
+        c = 0
+        print(tot_rows,tot_cols)
         for a in range(tot_rows):
             for b in range(tot_cols):
-
+                c += 1
+                set_progress((str(c), str(tot_rows * tot_cols)))
                 trial_row = trial_rows[a, b][0]
                 # plot target positions:
+                print(trial_row)
                 target_pos = trials['target_positions'][trial_row]
                 target_size = trials['target_size'][trial_row]
                 fig.add_trace(go.Scattergl(x=target_pos[:, 0],
@@ -147,8 +208,10 @@ def draw_graphs(n_clicks,versions,types):
                               row=a + 1, col=b + 1)
 
         fig.update_layout(height=1000,width=1000)
-    return fig
+        return fig
+    else:
+        return go.FigureWidget()
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)
