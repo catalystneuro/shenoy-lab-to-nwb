@@ -17,7 +17,7 @@ def convert(source_folder):
         "datafileB004.ns2",
     ]
     nsx_files = list(source_folder.glob("**/*.ns2"))
-    assert len(nsx_files) >=2, f"at least 2 ns2 files need to be present: {nsx_file_names}"
+    assert (len(nsx_files)%2)==0, f"at least 2* ns2 files need to be present: {nsx_file_names}"
     assert all(
         [i.name in nsx_file_names for i in nsx_files]
     ), f"one of {nsx_file_names} missing"

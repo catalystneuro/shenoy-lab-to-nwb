@@ -11,18 +11,26 @@ class MatDataExtractor:
         rfile = scio.loadmat(str(path_r_file))
         self.R = rfile["R"][0]
         self.SU = rfile["SU"]
-        self._no_trials = self.R.shape[0]
+        self._good_trials = self.good_trials()
         self._no_units = self.SU[0, 0]["unitLookup"].shape[0]
+
+    def good_trials(self):
+        good_trials = []
+        for i in range(self.R.shape[0]):
+            if self.R["CerebusInfoA"][i].shape[0]==1:
+                good_trials.append(i)
+        return good_trials
+
 
     def get_trial_ids(self):
         return [
             self.R["CerebusInfoA"][i]["trialID"][0, 0][0, 0]
-            for i in range(self._no_trials)
+            for i in self._good_trials
         ]
 
     def extract_unit_spike_times(self, trial_nos=None):
         if trial_nos is None:
-            trial_nos = np.arange(self._no_trials)
+            trial_nos = self._good_trials
         units_list = []
         for trial_no in trial_nos:
             units_list.append(
@@ -38,7 +46,7 @@ class MatDataExtractor:
         Times in seconds
         """
         if trial_nos is None:
-            trial_nos = np.arange(self._no_trials)
+            trial_nos = self._good_trials
         trial_times = np.array(
             [
                 [
@@ -50,14 +58,16 @@ class MatDataExtractor:
         )
         split_id = np.where(np.diff(trial_times[:, 0]) < 0)[0][0] + 1
         # find mean inter_trial times:
-        inter_trial_intervals = np.array(
-            [
-                trial_times[i + 1, 0] - trial_times[i, 1]
-                for i in range(self._no_trials - 1)
-            ]
-        )
+        inter_trial_intervals = []
+        trial_conti = np.diff(self._good_trials)
+        for i in range(len(self._good_trials)-1):
+            if trial_conti[i]==1:
+                inter_trial_intervals.append(trial_times[i + 1, 0] - trial_times[i, 1])
+            else:
+                inter_trial_intervals.append(np.nan)
+        inter_trial_intervals = np.array(inter_trial_intervals)
         inter_trial_intervals = np.delete(inter_trial_intervals, split_id - 1)
-        mean_interval = np.mean(inter_trial_intervals)
+        mean_interval = np.nanmean(inter_trial_intervals)
         offset_value = (
             trial_times[split_id - 1, 1] + mean_interval - trial_times[split_id, 0]
         )
@@ -70,7 +80,7 @@ class MatDataExtractor:
         """
         trial_times, _ = self.extract_trial_times()
         if trial_nos is None:
-            trial_nos = np.arange(self._no_trials)
+            trial_nos = self._good_trials
         trial_events_dict = []
         events = [
             [
@@ -90,10 +100,10 @@ class MatDataExtractor:
                         name=event[1],
                         data=np.array(
                             [
-                                self.R[event[0]][i][0, 0] / 1e3 + trial_times[i, 0]
+                                self.R[event[0]][i][0, 0] / 1e3 + trial_times[no, 0]
                                 if self.R[event[0]][i].shape[0] != 0
                                 else np.nan
-                                for i in trial_nos
+                                for no,i in enumerate(trial_nos)
                             ]
                         ),
                         description=event[2],
@@ -121,7 +131,7 @@ class MatDataExtractor:
         Time in seconds wrt trial start time
         """
         if trial_nos is None:
-            trial_nos = np.arange(self._no_trials)
+            trial_nos = self._good_trials
         trial_details_dict = []
         events = [
             [
@@ -171,19 +181,20 @@ class MatDataExtractor:
             ]
         ]
         for event in events:
-            trial_details_dict.append(
-                dict(
-                    name=event[1],
-                    data=np.array([self.R[event[0]][i][0, 0] for i in trial_nos]),
-                    description=event[2],
+            if event[0] in self.R.dtype.fields.keys():
+                trial_details_dict.append(
+                    dict(
+                        name=event[1],
+                        data=np.array([self.R[event[0]][i][0, 0] for i in trial_nos]),
+                        description=event[2],
+                    )
                 )
-            )
 
         return trial_details_dict
 
     def extract_behavioral_position(self, trial_nos=None):
         trial_times, _ = self.extract_trial_times()
-        trial_nos = np.arange(self._no_trials) if trial_nos is None else trial_nos
+        trial_nos = self._good_trials if trial_nos is None else trial_nos
         eye_positions = []
         hand_positions = []
         cursor_positions = []
@@ -192,9 +203,9 @@ class MatDataExtractor:
         offset_val = (
             offset_hand_Y_nitschke if self.monkey_name == "N" else offset_hand_Y_jenkins
         )
-        for trial_no in trial_nos:
+        for no,trial_no in enumerate(trial_nos):
             timestamps = (
-                trial_times[trial_no, 0]
+                trial_times[no, 0]
                 + np.arange(len(self.R["EYE"][trial_no][0, 0]["X"].squeeze())) / 1000.0
             )
             eye_positions.append(
@@ -228,7 +239,7 @@ class MatDataExtractor:
 
     def extract_maze_data(self, trial_nos=None):
         if trial_nos is None:
-            trial_nos = np.arange(self._no_trials)
+            trial_nos = self._good_trials
         maze_details_list = []
         maze_details = [
             ["numFlies", "maze_num_targets", "number of targets presented"],
@@ -236,13 +247,14 @@ class MatDataExtractor:
             ["novelMaze", "novel_maze", "novel maze"],
         ]
         for maze_data in maze_details:
-            maze_details_list.append(
-                dict(
-                    name=maze_data[1],
-                    data=np.array([self.R[maze_data[0]][i][0, 0] for i in trial_nos]),
-                    description=maze_data[2],
+            if maze_data[0] in self.R.dtype.fields.keys():
+                maze_details_list.append(
+                    dict(
+                        name=maze_data[1],
+                        data=np.array([self.R[maze_data[0]][i][0, 0] for i in trial_nos]),
+                        description=maze_data[2],
+                    )
                 )
-            )
         # add target positions/size+frame locations:
         target_positions = []
         for i in trial_nos:

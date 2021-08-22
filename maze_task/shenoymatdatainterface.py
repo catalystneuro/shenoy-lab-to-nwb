@@ -90,7 +90,7 @@ class ShenoyMatDataInterface(BaseDataInterface):
         unit_spike_times = []
         for chan in range(len(trial_spike_times[0])):
             channel_ts = []
-            for trialno in range(self.mat_extractor._no_trials):
+            for trialno in range(len(self.mat_extractor._good_trials)):
                 channel_ts.extend(
                     trial_spike_times[trialno][chan] + trial_times[trialno, 0]
                 )
