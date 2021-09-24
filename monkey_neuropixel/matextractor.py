@@ -15,6 +15,7 @@ class MatDataExtractor:
         self.npix_meta = self._open_file['npix_meta']
         self.trial_colnames = list(self.trials.keys())
         self._no_trials = max(self.trials[self.trial_colnames[0]].shape)
+        self._no_units = max(self.npix_meta['cluster_ids'].shape)
         subject_array = self._open_file[self.trials['subject'][0, 0]]
         self.subject_name = ''.join([chr(subject_array[i, 0]) for i in range(subject_array.shape[0])])
 
@@ -111,3 +112,37 @@ class MatDataExtractor:
                 spike_times_all_list[id].extend((self._open_file[sptimes[id,0]][:].flatten()*1e-3 + trial_start[trl]).tolist())
         print(time()-start)
         return spike_times_all_list
+
+    def extract_unit_details(self, selfspike_ids: list = None):
+        default_unit_args = {'cluster_ids':'id',
+                             'cluster_waveform_ch':'electrodes',
+                             'cluster_waveform_template':'waveform_mean'}
+        custom_unit_args = {'cluster_amplitude':'peak to peak amplitude in uV',
+                            'cluster_is_localized':'boolean indicator of whether or not center of mass of '
+                                                   'waveform is well defined',
+                            # 'cluster_layer':'one of "Superficial", "Deep", "White" (white matter), or '
+                            #                 '"Unknown", cluster layer identified via current source density '
+                            #                 'and peak first waveforms analysis',
+                            'cluster_position_aligned':'spatial positions of neurons on probe, '
+                                                        'aligned using CSD analysis. for Y, 0 corresponds'
+                                                        ' to the nominal cortical surface, and increasingly '
+                                                        'negative values indicate deeper in cortex towards white matter',
+                            'cluster_positions':'spatial positions of neurons on probe, using raw probe coordinates '
+                                                'from the channel map. 0 corresponds to the tip of the probe, '
+                                                'and increasingly positive values indicate shallower in cortex '
+                                                'towards the surface (note: same orientation as aligned, '
+                                                'different offset)',
+                            # 'cluster_ratings':'one of "good" or "unstable", individually hand-reviewed indicator '
+                            #                   'of neuron stability over trials during the session'
+                                              }
+        default_dict = defaultdict(dict)
+        custom_dict = defaultdict(dict)
+        for arg in default_unit_args:
+            default_dict[default_unit_args[arg]].update(data=np.concatenate(
+                [self.npix_meta[arg][:,i].flatten()[:,np.newaxis] for i in range(self._no_units)],axis=1).T)
+        for arg in custom_unit_args:
+            custom_dict[arg].update(
+                data=np.concatenate(
+                    [self.npix_meta[arg][:,i].flatten()[:,np.newaxis] for i in range(self._no_units)],axis=1).T,
+                description=custom_unit_args[arg])
+        return default_dict, custom_dict
