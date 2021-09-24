@@ -1,9 +1,9 @@
 from collections import defaultdict
 from pathlib import Path
-
+from tqdm import tqdm
 import h5py
 import numpy as np
-
+from time import time
 
 class MatDataExtractor:
 
@@ -13,8 +13,8 @@ class MatDataExtractor:
         self._open_file = h5py.File(self.file_name, 'r')
         self.trials = self._open_file['trials']
         self.npix_meta = self._open_file['npix_meta']
-        self.trial_colnames = list(self.trialskeys())
-        self._no_trials = len(self.R[self.trial_colnames[0]])
+        self.trial_colnames = list(self.trials.keys())
+        self._no_trials = max(self.trials[self.trial_colnames[0]].shape)
         subject_array = self._open_file[self.trials['subject'][0, 0]]
         self.subject_name = ''.join([chr(subject_array[i, 0]) for i in range(subject_array.shape[0])])
 
@@ -25,9 +25,9 @@ class MatDataExtractor:
         start_time_list = []
         stop_time_list = []
         for trial_no in range(self._no_trials):
-            start_time_list.append(self._open_file[self.trials['npix_start_idx'][0, trial_no]][0, 0]*3e-4)
-            stop_time_list.append(self._open_file[self.trials['npix_stop_idx'][0, trial_no]][0, 0]*3e-4)
-        return start_time_list, stop_time_list
+            start_time_list.append(self._open_file[self.trials['npix_start_idx'][0, trial_no]][0, 0]/3e4)
+            stop_time_list.append(self._open_file[self.trials['npix_stop_idx'][0, trial_no]][0, 0]/3e4)
+        return np.array(start_time_list), np.array(stop_time_list)
 
     def get_trial_epochs(self):
         """
@@ -36,7 +36,8 @@ class MatDataExtractor:
         trial_start, trial_end = self.get_trial_times()
 
         def get_val(name, trial_no):
-            return (self._return_trial_value(name, trial_no=trial_no)[0, 0] + trial_start[trial_no])*1e-3
+            return np.array(self._return_trial_value(name, trial_no=trial_no)).flatten()[0]*1e-3 + \
+                   trial_start[trial_no]*1e-3
 
         events_list = {'target_onset_time': 'TargetOnset',
                        'go_cue_time': 'GoCue',
@@ -66,17 +67,17 @@ class MatDataExtractor:
         for field in beh_fields:
             beh_dict[field].update(
                 data=np.concatenate(
-                    [np.array(self._return_trial_value(field, i)).T*1e-3 for i in range(self._no_trials)], axis=0),
+                    [np.array(self._return_trial_value(beh_fields[field], i)).T*1e-3 for i in range(self._no_trials)], axis=0),
                 description=f'{field} x,y,z in m')
         beh_dict['times'].update(
             data=np.concatenate(
-                [(np.array(self._return_trial_value('hand_time', i)).T + trial_start[i])*1e-3 for i in
+                [np.array(self._return_trial_value('hand_time', i)).T*1e-3 + trial_start[i] for i in
                  range(self._no_trials)], axis=0),
             description='time vector in s')
         return beh_dict
 
     def get_trial_ids(self):
-        return [self._return_trial_value('trialId', i)[0, 0] for i in range(self._no_trials)]
+        return np.array([self._return_trial_value('trialId', i)[0, 0] for i in range(self._no_trials)])
 
     def get_task_details(self):
         task_fields = {'centerX': 'center hold location x: screen center origin, direction: right',
@@ -103,10 +104,10 @@ class MatDataExtractor:
         trial_start, _ = self.get_trial_times()
         for _ in spike_ids:
             spike_times_all_list.append([])
-        for id in spike_ids:
-            spk_times = []
-            for trl in trial_nos:
-                spk_times.append(
-                    self._open_file[self._return_trial_value('npix', trl)[id, 0]][:].squeeze()*1e-3 + trial_start[trl])
-            spike_times_all_list[id] = np.concatenate(spk_times, axis=0)
+        start=time()
+        for trl in tqdm(trial_nos):
+            sptimes= self._return_trial_value('npix', trl)
+            for id in spike_ids:
+                spike_times_all_list[id].extend((self._open_file[sptimes[id,0]][:].flatten()*1e-3 + trial_start[trl]).tolist())
+        print(time()-start)
         return spike_times_all_list
