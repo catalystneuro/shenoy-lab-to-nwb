@@ -1,8 +1,8 @@
 from pathlib import Path
 import numpy as np
+from datetime import datetime
 from typing import Union
 from nwb_conversion_tools import NWBConverter
-from nwb_conversion_tools.basedatainterface import BaseDataInterface
 from nwb_conversion_tools.utils.json_schema import (
     get_base_schema, get_schema_from_hdmf_class, get_schema_for_NWBFile, get_schema_from_method_signature)
 from pynwb import NWBFile, TimeSeries
@@ -12,25 +12,71 @@ from pynwb.misc import Units
 from .matextractor import MatDataExtractor
 from pynwb.base import DynamicTable
 from pynwb.file import Subject
-from ..center_out_task.matdatainterface import COutMatDataInterface
+from nwb_conversion_tools.basedatainterface import BaseDataInterface
 PathType = Union[str, Path]
 
 
-class NpxMatDataInterface(COutMatDataInterface):
+class NpxMatDataInterface(BaseDataInterface):
     def __init__(self, filename: PathType):
-        super().__init__(filename = filename)
+        super().__init__(filename=filename)
+        self.filename = Path(filename)
+        assert self.filename.suffix == ".mat", "file_path should be a .mat"
+        assert self.filename.exists(), "file_path does not exist"
+        self.mat_extractor = MatDataExtractor(self.filename)
 
     @classmethod
     def get_source_schema(cls):
         return get_schema_from_method_signature(cls.__init__)
 
+    @staticmethod
+    def _convert_schema_object_to_array(schema_to_convert):
+        base_schema = get_base_schema()
+        base_schema.update(type="array")
+        _ = base_schema.pop("properties")
+        base_schema["items"] = schema_to_convert
+        return base_schema
+
+    def get_metadata_schema(self):
+        metadata_schema = get_base_schema()
+        metadata_schema["required"] = ["Behavior", "Intervals",
+                                       "Units", "Subject", "NWBFile"]
+        metadata_schema["properties"] = dict()
+        metadata_schema["properties"]["Behavior"] = get_base_schema()
+        metadata_schema["properties"]["NWBFile"] = get_schema_for_NWBFile()
+        metadata_schema["properties"]["Intervals"] = get_schema_from_hdmf_class(TimeIntervals)
+
+        dt_schema = get_base_schema(DynamicTable)
+        dt_schema["additionalProperties"] = True
+        metadata_schema["properties"]["Behavior"]["properties"] = dict(
+            Position=self._convert_schema_object_to_array(
+                get_schema_from_hdmf_class(SpatialSeries)
+            ),
+        )
+        units_schema = get_schema_from_hdmf_class(Units)
+        units_schema["additionalProperties"] = True
+        metadata_schema["properties"]["Units"] = units_schema
+        return metadata_schema
+
     def get_metadata(self):
-        metadata = super(NpxMatDataInterface, self).get_metadata()
-        _ = metadata.pop('NWBFile')
-        metadata['Behavior']['Position'] = [
+        metadata = dict(
+            NWBFile=dict(
+                session_start_time=str(datetime.strptime(self.filename.stem.split('.')[0][1:],"%Y%m%d"))
+            ),
+            Subject=dict(
+                sex="M", species="Macaca mulatta",
+                subject_id=self.mat_extractor.subject_name
+            ),
+            Behavior=dict(
+                Position=[
                     dict(name="hand_speed", reference_frame="screen center"),
                     dict(name="hand_position", reference_frame="screen center"),
                 ]
+            ),
+            Intervals=dict(
+                name="trials"
+            ),
+            Units=dict(name="units"),
+        )
         return metadata
 
     def run_conversion(self, nwbfile: NWBFile, metadata: dict, **kwargs):
@@ -53,7 +99,8 @@ class NpxMatDataInterface(COutMatDataInterface):
         for beh, args in beh_dict.items():
             args_ = dict(
                 timestamps=timestamps['data'],
-                reference_frame="screen center").update(args)
+                reference_frame="screen center")
+            args_.update(args)
             spatial_series_list.append(position_container.create_spatial_series(name=beh,**args_))
         beh_mod.add(position_container)
 
@@ -71,7 +118,7 @@ class NpxMatDataInterface(COutMatDataInterface):
                 start_time=start_times[trial_no],
                 stop_time=stop_times[trial_no],
                 timeseries=spatial_series_list,
-                id=trial_ids[trial_no]
+                id=int(trial_ids[trial_no])
             )
             nwbfile.add_trial(**col_details_dict)
 
@@ -94,7 +141,7 @@ class NpxMatDataInterface(COutMatDataInterface):
         for no,unit_sp_times in enumerate(spike_times_list):
             args = dict()
             for key,value in args_all.items():
-                args[key] = value[no]
+                args[key] = int(value[no]) if key == 'id' else value[no]
             args.update(spike_times=unit_sp_times,
                         electrode_group=list(nwbfile.electrode_groups.values())[0],
                         obs_intervals=obs_intervals)

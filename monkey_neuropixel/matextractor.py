@@ -5,6 +5,7 @@ import h5py
 import numpy as np
 from time import time
 
+
 class MatDataExtractor:
 
     def __init__(self, file_name):
@@ -68,12 +69,12 @@ class MatDataExtractor:
         for field in beh_fields:
             beh_dict[field].update(
                 data=np.concatenate(
-                    [np.array(self._return_trial_value(beh_fields[field], i)).T*1e-3 for i in range(self._no_trials)], axis=0),
+                    [np.array(self._return_trial_value(beh_fields[field], i)).T*1e-3 for i in range(self._no_trials)], axis=0).squeeze(),
                 description=f'{field} x,y,z in m')
         beh_dict['times'].update(
             data=np.concatenate(
                 [np.array(self._return_trial_value('hand_time', i)).T*1e-3 + trial_start[i] for i in
-                 range(self._no_trials)], axis=0),
+                 range(self._no_trials)], axis=0).squeeze(),
             description='time vector in s')
         return beh_dict
 
