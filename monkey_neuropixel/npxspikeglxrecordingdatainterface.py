@@ -12,3 +12,4 @@ class NpxSpikeGLXRecordingInterface(SpikeGLXRecordingInterface):
         metadata["Ecephys"]["Device"] = [dict(name='Neuropixels',
                                               description='NHP version of neuropixels probe',
                                               manufacturer='Imec')]
+        return metadata
