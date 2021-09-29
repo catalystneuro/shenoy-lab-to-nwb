@@ -1,5 +1,6 @@
 from nwb_conversion_tools import NWBConverter
 from monkey_neuropixel.matdatainterface import NpxMatDataInterface
+from monkey_neuropixel.npxspikeglxrecordingdatainterface import NpxSpikeGLXRecordingInterface
 from pathlib import Path
 from nwb_conversion_tools.utils.json_schema import dict_deep_update
 import uuid
@@ -8,6 +9,7 @@ import uuid
 class NpxNWBConverter(NWBConverter):
     data_interface_classes = dict(
         Mat=NpxMatDataInterface,
+        Sgx=NpxSpikeGLXRecordingInterface
     )
 
     def __init__(self, source_data):
