@@ -9,7 +9,7 @@ from nwb_conversion_tools.utils.json_schema import (
     get_base_schema, get_schema_from_hdmf_class, get_schema_for_NWBFile, get_schema_from_method_signature)
 from pynwb import NWBFile, TimeSeries
 from pynwb.epoch import TimeIntervals
-from pynwb.behavior import Position, SpatialSeries
+from pynwb.behavior import Position, SpatialSeries, BehavioralTimeSeries
 from pynwb.misc import Units
 from .matextractor import MatDataExtractor
 from pynwb.base import DynamicTable
@@ -98,15 +98,20 @@ class NpxMatDataInterface(BaseDataInterface):
             "behavior", "contains monkey movement data"
         )
         position_container = Position()
+        beh_ts_container = BehavioralTimeSeries()
         spatial_series_list = []
         timestamps = beh_dict.pop('times')
-        for beh, args in beh_dict.items():
+        for name, args in beh_dict.items():
             args_ = dict(
                 timestamps=timestamps['data'],
                 reference_frame="screen center")
             args_.update(args)
-            spatial_series_list.append(position_container.create_spatial_series(name=beh,**args_))
+            if 'position' in name:
+                spatial_series_list.append(position_container.create_spatial_series(name=name,**args_))
+            else:
+                beh_ts_container.create_timeseries(name=name, **args_)
         beh_mod.add(position_container)
+        beh_mod.add(beh_ts_container)
 
         # add trials:
         task_dict.update(events_dict)
