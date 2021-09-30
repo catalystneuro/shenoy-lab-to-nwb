@@ -67,8 +67,8 @@ class NpxMatDataInterface(BaseDataInterface):
                 subject_id=self.mat_extractor.subject_name
             ),
             Behavior=dict(
-                Position=[dict(name="hand_position", reference_frame="screen center")],
-                BehavioralTimeSeries=[dict(name="hand_speed", unit="m/s")],
+                Position=[dict(name="hand_position", reference_frame="screen center", description="hand position x,y,z")],
+                BehavioralTimeSeries=[dict(name="hand_speed", unit="m/s", description="hand speed in x,y,z")],
             ),
             Ecephys=dict(
                 Device=[dict(name='Neuropixels',
