@@ -32,11 +32,9 @@ class NpxMatDataInterface(BaseDataInterface):
                                        "Ecephys"]
         metadata_schema["properties"] = dict()
         metadata_schema["properties"]["Behavior"] = get_base_schema()
+        metadata_schema["properties"]["Ecephys"] = get_base_schema()
         metadata_schema["properties"]["NWBFile"] = get_schema_for_NWBFile()
-        metadata_schema["properties"]["Intervals"] = get_schema_from_hdmf_class(TimeIntervals)
 
-        dt_schema = get_base_schema(DynamicTable)
-        dt_schema["additionalProperties"] = True
         metadata_schema["properties"]["Ecephys"]["properties"] = dict(
             Device=dict(
                 type="array",
@@ -51,6 +49,10 @@ class NpxMatDataInterface(BaseDataInterface):
             Position=dict(
                 type="array",
                 items=get_schema_from_hdmf_class(SpatialSeries)
+            ),
+            BehavioralTimeSeries=dict(
+                type="array",
+                items=get_schema_from_hdmf_class(TimeSeries)
             )
         )
         return metadata_schema
@@ -65,10 +67,8 @@ class NpxMatDataInterface(BaseDataInterface):
                 subject_id=self.mat_extractor.subject_name
             ),
             Behavior=dict(
-                Position=[
-                    dict(name="hand_speed", reference_frame="screen center"),
-                    dict(name="hand_position", reference_frame="screen center"),
-                ]
+                Position=[dict(name="hand_position", reference_frame="screen center")],
+                BehavioralTimeSeries=[dict(name="hand_speed", unit="m/s")],
             ),
             Ecephys=dict(
                 Device=[dict(name='Neuropixels',
@@ -76,7 +76,8 @@ class NpxMatDataInterface(BaseDataInterface):
                              manufacturer='Imec')],
                 ElectrodeGroup=[dict(name="Probe0",
                                      description="array corresponding to device implanted at PMd",
-                                     location="Pre-motor cortex")]
+                                     location="Pre-motor cortex",
+                                     device="Neuropixels")]
             )
         )
         return metadata
@@ -102,14 +103,13 @@ class NpxMatDataInterface(BaseDataInterface):
         spatial_series_list = []
         timestamps = beh_dict.pop('times')
         for name, args in beh_dict.items():
-            args_ = dict(
-                timestamps=timestamps['data'],
-                reference_frame="screen center")
-            args_.update(args)
+            args_= dict(timestamps=timestamps['data'],**args)
             if 'position' in name:
-                spatial_series_list.append(position_container.create_spatial_series(name=name,**args_))
+                args_.update(metadata_comp['Behavior']['Position'][0])
+                spatial_series_list.append(position_container.create_spatial_series(**args_))
             else:
-                beh_ts_container.create_timeseries(name=name, **args_)
+                args_.update(metadata_comp['Behavior']['BehavioralTimeSeries'][0])
+                beh_ts_container.create_timeseries(**args_)
         beh_mod.add(position_container)
         beh_mod.add(beh_ts_container)
 
@@ -135,9 +135,9 @@ class NpxMatDataInterface(BaseDataInterface):
             nwbfile.create_device(**metadata_comp["Ecephys"]["Device"][0])
         if len(nwbfile.electrode_groups)==0:
             # add electrdoe groups:
-            nwbfile.create_electrode_group(device=nwbfile.devices[metadata_comp["Ecephys"]["Device"][0]["name"]],
-                                           **metadata_comp["Ecephys"]["ElectrodeGroup"][0],
-                                           )
+            args = metadata_comp["Ecephys"]["ElectrodeGroup"][0]
+            nwbfile.create_electrode_group(device=nwbfile.devices[args.pop('device')],
+                                           **args)
         # add units:
         args_all = dict()
         for name, custom_arg in custom_unit_args.items():

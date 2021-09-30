@@ -1,6 +1,5 @@
 from nwb_conversion_tools import NWBConverter, SpikeGLXRecordingInterface
 from monkey_neuropixel.matdatainterface import NpxMatDataInterface
-from monkey_neuropixel.npxspikeglxrecordingdatainterface import NpxSpikeGLXRecordingInterface
 from pathlib import Path
 from nwb_conversion_tools.utils.json_schema import dict_deep_update
 import uuid
