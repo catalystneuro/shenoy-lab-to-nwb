@@ -24,18 +24,6 @@ class NpxMatDataInterface(BaseDataInterface):
         assert self.filename.exists(), "file_path does not exist"
         self.mat_extractor = MatDataExtractor(self.filename)
 
-    @classmethod
-    def get_source_schema(cls):
-        return get_schema_from_method_signature(cls.__init__)
-
-    @staticmethod
-    def _convert_schema_object_to_array(schema_to_convert):
-        base_schema = get_base_schema()
-        base_schema.update(type="array")
-        _ = base_schema.pop("properties")
-        base_schema["items"] = schema_to_convert
-        return base_schema
-
     def get_metadata_schema(self):
         metadata_schema = get_base_schema()
         metadata_schema["required"] = ["Behavior", "Intervals",
@@ -48,9 +36,10 @@ class NpxMatDataInterface(BaseDataInterface):
         dt_schema = get_base_schema(DynamicTable)
         dt_schema["additionalProperties"] = True
         metadata_schema["properties"]["Behavior"]["properties"] = dict(
-            Position=self._convert_schema_object_to_array(
-                get_schema_from_hdmf_class(SpatialSeries)
-            ),
+            Position=dict(
+                type="array",
+                items=get_schema_from_hdmf_class(SpatialSeries)
+            )             
         )
         units_schema = get_schema_from_hdmf_class(Units)
         units_schema["additionalProperties"] = True
@@ -72,10 +61,6 @@ class NpxMatDataInterface(BaseDataInterface):
                     dict(name="hand_position", reference_frame="screen center"),
                 ]
             ),
-            Intervals=dict(
-                name="trials"
-            ),
-            Units=dict(name="units"),
         )
         return metadata
 
@@ -111,8 +96,8 @@ class NpxMatDataInterface(BaseDataInterface):
             nwbfile.add_trial_column(**col_det)
         for trial_no in range(self.mat_extractor._no_trials):
             col_details_dict = {
-                i: args["data"][trial_no]
-                for i,args in task_dict.items()
+                key: args["data"][trial_no]
+                for key, args in task_dict.items()
             }
             col_details_dict.update(
                 start_time=start_times[trial_no],
