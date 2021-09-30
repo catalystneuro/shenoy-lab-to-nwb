@@ -1,4 +1,4 @@
-from nwb_conversion_tools import NWBConverter
+from nwb_conversion_tools import NWBConverter, SpikeGLXRecordingInterface
 from monkey_neuropixel.matdatainterface import NpxMatDataInterface
 from monkey_neuropixel.npxspikeglxrecordingdatainterface import NpxSpikeGLXRecordingInterface
 from pathlib import Path
@@ -9,7 +9,7 @@ import uuid
 class NpxNWBConverter(NWBConverter):
     data_interface_classes = dict(
         Mat=NpxMatDataInterface,
-        Sgx=NpxSpikeGLXRecordingInterface
+        Sgx=SpikeGLXRecordingInterface
     )
 
     def __init__(self, source_data):

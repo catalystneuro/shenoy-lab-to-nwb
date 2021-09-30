@@ -2,6 +2,8 @@ from pathlib import Path
 import numpy as np
 from datetime import datetime
 from typing import Union
+
+import pynwb
 from nwb_conversion_tools import NWBConverter
 from nwb_conversion_tools.utils.json_schema import (
     get_base_schema, get_schema_from_hdmf_class, get_schema_for_NWBFile, get_schema_from_method_signature)
@@ -26,8 +28,8 @@ class NpxMatDataInterface(BaseDataInterface):
 
     def get_metadata_schema(self):
         metadata_schema = get_base_schema()
-        metadata_schema["required"] = ["Behavior", "Intervals",
-                                       "Units", "Subject", "NWBFile"]
+        metadata_schema["required"] = ["Behavior", "Subject", "NWBFile",
+                                       "Ecephys"]
         metadata_schema["properties"] = dict()
         metadata_schema["properties"]["Behavior"] = get_base_schema()
         metadata_schema["properties"]["NWBFile"] = get_schema_for_NWBFile()
@@ -35,15 +37,22 @@ class NpxMatDataInterface(BaseDataInterface):
 
         dt_schema = get_base_schema(DynamicTable)
         dt_schema["additionalProperties"] = True
+        metadata_schema["properties"]["Ecephys"]["properties"] = dict(
+            Device=dict(
+                type="array",
+                items=get_schema_from_hdmf_class(pynwb.device.Device)
+            ),
+            ElectrodeGroup=dict(
+                type="array",
+                items=get_schema_from_hdmf_class(pynwb.ecephys.ElectrodeGroup)
+            ),
+        )
         metadata_schema["properties"]["Behavior"]["properties"] = dict(
             Position=dict(
                 type="array",
                 items=get_schema_from_hdmf_class(SpatialSeries)
-            )             
+            )
         )
-        units_schema = get_schema_from_hdmf_class(Units)
-        units_schema["additionalProperties"] = True
-        metadata_schema["properties"]["Units"] = units_schema
         return metadata_schema
 
     def get_metadata(self):
@@ -61,10 +70,20 @@ class NpxMatDataInterface(BaseDataInterface):
                     dict(name="hand_position", reference_frame="screen center"),
                 ]
             ),
+            Ecephys=dict(
+                Device=[dict(name='Neuropixels',
+                             description='NHP version of neuropixels probe',
+                             manufacturer='Imec')],
+                ElectrodeGroup=[dict(name="Probe0",
+                                     description="array corresponding to device implanted at PMd",
+                                     location="Pre-motor cortex")]
+            )
         )
         return metadata
 
     def run_conversion(self, nwbfile: NWBFile, metadata: dict, **kwargs):
+        metadata_comp = self.get_metadata()
+        metadata_comp.update(metadata)
         assert isinstance(nwbfile, NWBFile), "'nwbfile' should be of type pynwb.NWBFile"
         start_times, stop_times = self.mat_extractor.get_trial_times()
         events_dict = self.mat_extractor.get_trial_epochs()
@@ -108,14 +127,12 @@ class NpxMatDataInterface(BaseDataInterface):
             nwbfile.add_trial(**col_details_dict)
 
         if len(nwbfile.devices)==0:
-            nwbfile.create_device(name="NeuroPixels", description='mouse version of neuropixels implanted in monkeys')
+            nwbfile.create_device(**metadata_comp["Ecephys"]["Device"][0])
         if len(nwbfile.electrode_groups)==0:
             # add electrdoe groups:
-            elec_gp_name = "ElectrodeGroup_1"
-            nwbfile.create_electrode_group(name=elec_gp_name,
-                                           description="desc",
-                                           location="location",
-                                           device=nwbfile.devices["NeuroPixels"])
+            nwbfile.create_electrode_group(device=nwbfile.devices[metadata_comp["Ecephys"]["Device"][0]["name"]],
+                                           **metadata_comp["Ecephys"]["ElectrodeGroup"][0],
+                                           )
         # add units:
         args_all = dict()
         for name, custom_arg in custom_unit_args.items():
