@@ -28,7 +28,6 @@ class NpxNWBConverter(NWBConverter):
             session_description="",
             identifier=str(uuid.uuid4()),
             experimenter=["Daniel O'Shea"],
-            experiment_description="center out task for Monkeys with mouse version of neuropixels",
             institution="Stanford University",
             related_publications="",
         )
