@@ -1,14 +1,15 @@
 from nwb_conversion_tools import NWBConverter, SpikeGLXRecordingInterface
 from monkey_neuropixel.matdatainterface import NpxMatDataInterface
 from pathlib import Path
-from nwb_conversion_tools.utils.json_schema import dict_deep_update
+from nwb_conversion_tools.utils.json_schema import dict_deep_update, FilePathType
 import uuid
+from typing import Optional
 
 
 class ShenoySpikeGLXRecordingInterface(SpikeGLXRecordingInterface):
 
-    def __init__(self, args, **kwargs):
-        super(ShenoySpikeGLXRecordingInterface, self).__init__(args, **kwargs)
+    def __init__(self, file_path: FilePathType, stub_test: Optional[bool] = False):
+        super(ShenoySpikeGLXRecordingInterface, self). __init__(file_path=file_path, stub_test=stub_test)
         for ch in self.recording_extractor.get_channel_ids():
             self.recording_extractor.set_channel_property(
                 channel_id=ch, property_name="group_name", value="Probe0"
