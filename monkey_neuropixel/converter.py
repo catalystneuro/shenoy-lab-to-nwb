@@ -17,8 +17,8 @@ class ShenoySpikeGLXRecordingInterface(SpikeGLXRecordingInterface):
 
     def get_metadata(self):
         metadata = super(ShenoySpikeGLXRecordingInterface, self).get_metadata()
-        _ = metadata["Ecephys"].pop["ElectrodeGroup"]
-        _ = metadata["Ecephys"].pop["Device"]
+        _ = metadata["Ecephys"].pop("ElectrodeGroup")
+        _ = metadata["Ecephys"].pop("Device")
         return metadata
 
 class NpxNWBConverter(NWBConverter):
