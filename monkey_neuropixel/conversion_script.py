@@ -31,4 +31,4 @@ metadata["Ecephys"]["ElectricalSeries_raw"]["description"] = \
     "file and (4) excised problematic time windows where the monkey was asleep or distracted, or regions where the " \
     "monkey began a new behavioral task that is not considered part of this dataset. This last step was important for " \
     "achieving consistent, stable sorts with KiloSort 2.0 "
-nc.run_conversion(nwbfile_path=str(nwb_pt), overwrite=True, conversion_options=dict(),metadata=metadata)
+nc.run_conversion(nwbfile_path=str(nwb_pt), overwrite=True, metadata=metadata)
