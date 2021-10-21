@@ -17,35 +17,27 @@ class ShenoySpikeGLXRecordingInterface(SpikeGLXRecordingInterface):
 
     def get_metadata(self):
         metadata = super(ShenoySpikeGLXRecordingInterface, self).get_metadata()
-        _ = metadata["Ecephys"].pop("ElectrodeGroup")
-        _ = metadata["Ecephys"].pop("Device")
-        return metadata
+        metadata['Ecephys']['Device'] = [dict(name='Neuropixels',
+                             description='3A neuropixels',
+                             manufacturer='Imec')]
+        metadata['Ecephys']['ElectrodeGroup'] = [dict(name="Probe0",
+                                     description="recorded from the most distal electrode pads (closest to the tip)",
+                                     location=self.brain_location,
+                                     device="Neuropixels")]
 
 class NpxNWBConverter(NWBConverter):
     data_interface_classes = dict(
+        Sgx=ShenoySpikeGLXRecordingInterface,
         Mat=NpxMatDataInterface,
-        Sgx=ShenoySpikeGLXRecordingInterface
     )
 
-    def __init__(self, source_data):
-        """
-        Converts mat and .nsx data associated with Churchland(2012) monkey experiments with Utah
-        multielectrode implants.
-        Parameters
-        ----------
-        source_folder : dict
-        """
-        super().__init__(source_data)
-
-
     def get_metadata(self):
-        metadata_base = dict()
-        metadata_base["NWBFile"] = dict(
+        metadata = super(NpxNWBConverter, self).get_metadata()
+        metadata["NWBFile"].update(
             session_description="",
             identifier=str(uuid.uuid4()),
             experimenter=["Daniel O'Shea"],
             institution="Stanford University",
-            related_publications="",
+            # related_publications="",
         )
-        metadata_base = dict_deep_update(metadata_base,super().get_metadata())
-        return metadata_base
+        return metadata

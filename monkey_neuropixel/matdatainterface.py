@@ -68,19 +68,8 @@ class NpxMatDataInterface(BaseDataInterface):
                                        "Ecephys"]
         metadata_schema["properties"] = dict()
         metadata_schema["properties"]["Behavior"] = get_base_schema()
-        metadata_schema["properties"]["Ecephys"] = get_base_schema()
         metadata_schema["properties"]["NWBFile"] = get_schema_for_NWBFile()
 
-        metadata_schema["properties"]["Ecephys"]["properties"] = dict(
-            Device=dict(
-                type="array",
-                items=get_schema_from_hdmf_class(pynwb.device.Device)
-            ),
-            ElectrodeGroup=dict(
-                type="array",
-                items=get_schema_from_hdmf_class(pynwb.ecephys.ElectrodeGroup)
-            ),
-        )
         metadata_schema["properties"]["Behavior"]["properties"] = dict(
             Position=dict(
                 type="array",
@@ -114,15 +103,6 @@ class NpxMatDataInterface(BaseDataInterface):
                 Position=[
                     dict(name="hand_position", reference_frame="screen center", description="hand position x,y,z")],
                 BehavioralTimeSeries=[dict(name="hand_speed", unit="m/s", description="hand speed in x,y,z")],
-            ),
-            Ecephys=dict(
-                Device=[dict(name='Neuropixels',
-                             description='3A neuropixels',
-                             manufacturer='Imec')],
-                ElectrodeGroup=[dict(name="Probe0",
-                                     description="recorded from the most distal electrode pads (closest to the tip)",
-                                     location=self.brain_location,
-                                     device="Neuropixels")]
             )
         )
         return metadata
