@@ -20,7 +20,7 @@ class NpxMatDataInterface(BaseDataInterface):
         self.filename = Path(filename)
         assert self.filename.suffix == ".mat", "file_path should be a .mat"
         assert self.filename.exists(), "file_path does not exist"
-        with open("data/brain_location_map.json", "r") as io:
+        with open("/data/brain_location_map.json", "r") as io:
             self.brain_location_map = json.load(io)
         self.brain_location = self.brain_location_map.get(self.filename.stem.split('.')[0], "PMd")
         self.mat_extractor = MatDataExtractor(self.filename)
@@ -46,7 +46,7 @@ class NpxMatDataInterface(BaseDataInterface):
         return metadata_schema
 
     def get_metadata(self):
-        with open("data/metadata.json", "r") as io:
+        with open("/data/metadata.json", "r") as io:
             metadata = json.load(io)
         metadata["NWBFile"].update(
             session_start_time=str(datetime.strptime(self.filename.stem.split('.')[0][1:], "%Y%m%d")))

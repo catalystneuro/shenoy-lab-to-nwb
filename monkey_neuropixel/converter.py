@@ -18,7 +18,7 @@ class ShenoySpikeGLXRecordingInterface(SpikeGLXRecordingInterface):
 
     def get_metadata(self):
         metadata = super(ShenoySpikeGLXRecordingInterface, self).get_metadata()
-        with open("data/metadata.json","r") as io:
+        with open("/data/metadata.json","r") as io:
             metadata_lab  = json.load(io)
         metadata["Ecephys"] = dict_deep_update(metadata["Ecephys"], metadata_lab["Ecephys"])
         return metadata
