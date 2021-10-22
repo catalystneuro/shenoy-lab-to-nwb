@@ -5,12 +5,14 @@ from nwb_conversion_tools.utils.json_schema import dict_deep_update, FilePathTyp
 import uuid
 import json
 from typing import Optional
+from . import metadata_location_path
 
 
 class ShenoySpikeGLXRecordingInterface(SpikeGLXRecordingInterface):
-
     def __init__(self, file_path: FilePathType, stub_test: Optional[bool] = False):
-        super(ShenoySpikeGLXRecordingInterface, self). __init__(file_path=file_path, stub_test=stub_test)
+        super(ShenoySpikeGLXRecordingInterface, self).__init__(
+            file_path=file_path, stub_test=stub_test
+        )
         for ch in self.recording_extractor.get_channel_ids():
             self.recording_extractor.set_channel_property(
                 channel_id=ch, property_name="group_name", value="Probe0"
@@ -18,10 +20,13 @@ class ShenoySpikeGLXRecordingInterface(SpikeGLXRecordingInterface):
 
     def get_metadata(self):
         metadata = super(ShenoySpikeGLXRecordingInterface, self).get_metadata()
-        with open("/data/metadata.json","r") as io:
-            metadata_lab  = json.load(io)
-        metadata["Ecephys"] = dict_deep_update(metadata["Ecephys"], metadata_lab["Ecephys"])
+        with open(str(metadata_location_path), "r") as io:
+            metadata_lab = json.load(io)
+        metadata["Ecephys"] = dict_deep_update(
+            metadata["Ecephys"], metadata_lab["Ecephys"]
+        )
         return metadata
+
 
 class NpxNWBConverter(NWBConverter):
     data_interface_classes = dict(
