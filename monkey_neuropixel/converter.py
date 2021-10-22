@@ -3,6 +3,7 @@ from monkey_neuropixel.matdatainterface import NpxMatDataInterface
 from pathlib import Path
 from nwb_conversion_tools.utils.json_schema import dict_deep_update, FilePathType
 import uuid
+import json
 from typing import Optional
 
 
@@ -17,13 +18,10 @@ class ShenoySpikeGLXRecordingInterface(SpikeGLXRecordingInterface):
 
     def get_metadata(self):
         metadata = super(ShenoySpikeGLXRecordingInterface, self).get_metadata()
-        metadata['Ecephys']['Device'] = [dict(name='Neuropixels',
-                             description='3A neuropixels',
-                             manufacturer='Imec')]
-        metadata['Ecephys']['ElectrodeGroup'] = [dict(name="Probe0",
-                                     description="recorded from the most distal electrode pads (closest to the tip)",
-                                     location=self.brain_location,
-                                     device="Neuropixels")]
+        with open("data/metadata.json","r") as io:
+            metadata_lab  = json.load(io)
+        metadata["Ecephys"] = dict_deep_update(metadata["Ecephys"], metadata_lab["Ecephys"])
+        return metadata
 
 class NpxNWBConverter(NWBConverter):
     data_interface_classes = dict(

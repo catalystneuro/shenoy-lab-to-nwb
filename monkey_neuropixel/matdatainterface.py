@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 from typing import Union
-
+import json
 import pynwb
 from nwb_conversion_tools.basedatainterface import BaseDataInterface
 from nwb_conversion_tools.utils.json_schema import (
@@ -13,45 +13,6 @@ from .matextractor import MatDataExtractor
 
 PathType = Union[str, Path]
 
-brain_location_map = {
-    "P20180323": "M1",
-    "P20180327": "M1",
-    "P20180607": "PMd",
-    "P20180608": "PMd",
-    "P20180609": "PMd",
-    "P20180612": "PMd",
-    "P20180613": "PMd",
-    "P20180614": "PMd",
-    "P20180615": "PMd",
-    "P20180620": "M1",
-    "P20180622": "M1",
-    "P20180704": "M1",
-    "P20180705": "M1",
-    "P20180707": "M1",
-    "P20180710": "PMd",
-    "P20180711": "PMd",
-    "V20180814": "PMd",
-    "V20180815": "PMd",
-    "V20180817": "PMd",
-    "V20180818": "PMd",
-    "V20180819": "PMd",
-    "V20180820": "PMd",
-    "V20180821": "M1",
-    "V20180822": "M1",
-    "V20180823": "M1",
-    "V20180919": "PMd",
-    "V20180920": "PMd",
-    "V20180921": "PMd",
-    "V20180922": "PMd",
-    "V20180923": "PMd",
-    "V20180925": "PMd",
-    "V20180926": "PMd",
-    "V20180927": "M1",
-    "V20180928": "M1",
-    "V20181128": "PMd",
-    "V20181204": "PMd",
-}
-
 
 class NpxMatDataInterface(BaseDataInterface):
     def __init__(self, filename: PathType):
@@ -59,7 +20,9 @@ class NpxMatDataInterface(BaseDataInterface):
         self.filename = Path(filename)
         assert self.filename.suffix == ".mat", "file_path should be a .mat"
         assert self.filename.exists(), "file_path does not exist"
-        self.brain_location = brain_location_map.get(self.filename.stem.split('.')[0], "PMd")
+        with open("data/brain_location_map.json", "r") as io:
+            self.brain_location_map = json.load(io)
+        self.brain_location = self.brain_location_map.get(self.filename.stem.split('.')[0], "PMd")
         self.mat_extractor = MatDataExtractor(self.filename)
 
     def get_metadata_schema(self):
@@ -83,27 +46,17 @@ class NpxMatDataInterface(BaseDataInterface):
         return metadata_schema
 
     def get_metadata(self):
-        metadata = dict(
-            NWBFile=dict(
-                session_start_time=str(datetime.strptime(self.filename.stem.split('.')[0][1:], "%Y%m%d")),
-                experiment_description="Monkeys were trained to perform an instructed-delay reaching task in order "
-                                       "to drive task-related neural activity in primary motor and dorsal premotor "
-                                       "cortex where our electrodes were located. We trained the monkey to use his "
-                                       "right hand to grasp and translate a custom 3D printed handle (Shapeways, Inc.) "
-                                       "attached to a haptic feedback device (Delta.3, Force Dimension, Inc.). "
-                                       "The monkey was trained to perform a delayed reaching task by moving the "
-                                       "haptic device cursor towards green rectangular targets displayed on the "
-                                       "screen. Successful completion of each movement triggered a juice reward."
-            ),
-            Subject=dict(
-                sex="M", species="Macaca mulatta",
-                subject_id=self.mat_extractor.subject_name
-            ),
-            Behavior=dict(
-                Position=[
-                    dict(name="hand_position", reference_frame="screen center", description="hand position x,y,z")],
-                BehavioralTimeSeries=[dict(name="hand_speed", unit="m/s", description="hand speed in x,y,z")],
-            )
+        with open("data/metadata.json", "r") as io:
+            metadata = json.load(io)
+        metadata["NWBFile"].update(
+            session_start_time=str(datetime.strptime(self.filename.stem.split('.')[0][1:], "%Y%m%d")))
+        metadata["Subject"].update(
+            subject_id=self.mat_extractor.subject_name
+        )
+        metadata["Behavior"] = dict(
+            Position=[
+                dict(name="hand_position", reference_frame="screen center", description="hand position x,y,z")],
+            BehavioralTimeSeries=[dict(name="hand_speed", unit="m/s", description="hand speed in x,y,z")],
         )
         return metadata
 
