@@ -5,6 +5,7 @@
   "Subject": {"sex": "M", "species": "Macaca mulatta"},
   "Ecephys": {
     "ElectricalSeries_raw": {
+      "name": "ElectricalSeries_raw",
       "description":"(1) done ADC-bank-wise common average referencing along the lines of Siegle, Jia et al. 2021 [ https://doi.org/10.1038/s41586-020-03171-x ], (2) cleared the unused bits in the sync channel that were left floating, (3) concatenated each of the individual raw datasets we collected during the session into one file and (4) excised problematic time windows where the monkey was asleep or distracted, or regions where the monkey began a new behavioral task that is not considered part of this dataset. This last step was important for achieving consistent, stable sorts with KiloSort 2.0 "
     },
     "Device": [
