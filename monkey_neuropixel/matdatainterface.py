@@ -8,6 +8,7 @@ from nwb_conversion_tools.utils.json_schema import (
     get_base_schema,
     get_schema_from_hdmf_class,
     get_schema_for_NWBFile,
+    dict_deep_update
 )
 from pynwb import NWBFile, TimeSeries
 from pynwb.behavior import Position, SpatialSeries, BehavioralTimeSeries
@@ -50,15 +51,14 @@ class NpxMatDataInterface(BaseDataInterface):
         return metadata_schema
 
     def get_metadata(self):
-        with open(str(metadata_location_path), "r") as io:
-            metadata = json.load(io)
-        metadata["NWBFile"].update(
+        metadata = dict()
+        metadata["NWBFile"] = dict(
             session_start_time=str(
                 datetime.strptime(self.filename.stem.split(".")[0][1:], "%Y%m%d")
             )
         )
-        metadata["Subject"].update(subject_id=self.mat_extractor.subject_name)
-        metadata["Ecephys"]["ElectrodeGroup"][0].update(location=self.brain_location)
+        metadata["Subject"] = dict(subject_id=self.mat_extractor.subject_name)
+        metadata["Ecephys"] = dict(ElectrodeGroup=[dict(location=self.brain_location)])
         metadata["Behavior"] = dict(
             Position=[
                 dict(
@@ -74,8 +74,7 @@ class NpxMatDataInterface(BaseDataInterface):
         return metadata
 
     def run_conversion(self, nwbfile: NWBFile, metadata: dict, **kwargs):
-        metadata_comp = self.get_metadata()
-        metadata_comp.update(metadata)
+        metadata_comp = dict_deep_update(self.get_metadata(), metadata)
         assert isinstance(nwbfile, NWBFile), "'nwbfile' should be of type pynwb.NWBFile"
         start_times, stop_times = self.mat_extractor.get_trial_times()
         events_dict = self.mat_extractor.get_trial_epochs()

@@ -1,16 +1,27 @@
 from pathlib import Path
 
 from monkey_neuropixel.converter import NpxNWBConverter
+from nwb_conversion_tools.utils.json_schema import (
+    dict_deep_update
+)
+# retrieve metadata that is common:
+from . import metadata_location_path
+import json
+with open(str(metadata_location_path), "r") as io:
+    metadata_retrieved = json.load(io)
 
 pt = Path(
     r"C:\Users\Saksham\Documents\NWB\shenoy\data\PrimateNeuropixel\P20180323.behavior.mat"
 )
 nwbfile_saveloc = pt.with_suffix(".nwb")
 mt = NpxNWBConverter(dict(Mat=dict(filename=str(pt))))
+metadata  = mt.get_metadata()
+metadata = dict_deep_update(metadata, metadata_retrieved)
 conversion_options = dict()
 mt.run_conversion(
     nwbfile_path=str(nwbfile_saveloc),
     overwrite=True,
+    metadata=metadata,
     conversion_options=conversion_options,
 )
 
@@ -73,19 +84,14 @@ for name in sess_names:
 
 def converter(mat_pt, bin_pt):
     arg = dict(Mat=dict(filename=str(mat_pt)), Sgx=dict(file_path=str(bin_pt)))
+    nc = NpxNWBConverter(arg)
+    with open(str(metadata_location_path), "r") as io:
+        metadata_retrieved = json.load(io)
+    metadata = nc.get_metadata()
+    metadata = dict_deep_update(metadata, metadata_retrieved)
     nwb_pt = bin_pt.parent / Path(bin_pt.name.split(".")[0] + ".nwb")
 
-    nc = NpxNWBConverter(arg)
-    metadata = nc.get_metadata()
-    metadata["Ecephys"]["ElectricalSeries_raw"]["description"] = (
-        "(1) done ADC-bank-wise common average referencing along the lines of Siegle, Jia et al. 2021 "
-        "[ https://doi.org/10.1038/s41586-020-03171-x ], (2) cleared the unused bits in the sync channel that were "
-        "left floating, (3) concatenated each of the individual raw datasets we collected during the session into one "
-        "file and (4) excised problematic time windows where the monkey was asleep or distracted, or regions where the "
-        "monkey began a new behavioral task that is not considered part of this dataset. This last step was important for "
-        "achieving consistent, stable sorts with KiloSort 2.0 "
-    )
-    nc.run_conversion(nwbfile_path=str(nwb_pt), overwrite=True, metadata=metadata)
+    nc.run_conversion(nwbfile_path=str(nwb_pt), overwrite=True, metadata=metadata,conversion_options=dict())
     print(
         f'**************************conversion run for {mat_pt.name.split(".")[0]}............................'
     )
