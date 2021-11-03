@@ -26,7 +26,3 @@ Ecephys:
   - name: Probe0
     description: 3A Neuropixels
     manufacturer: Imec
-  ElectrodeGroup:
-  - name: Probe0
-    description: recorded from the most distal electrode pads (closest to the tip)
-    device: Neuropixels
