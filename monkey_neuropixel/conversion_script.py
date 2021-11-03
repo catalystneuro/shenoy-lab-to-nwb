@@ -29,12 +29,14 @@ mt = NpxNWBConverter(converter_args)
 # get and update metadata to go with the NWB file
 metadata = mt.get_metadata()
 metadata = dict_deep_update(metadata, metadata_default)
-
+stub = True
 conversion_options = dict(
-    Sgx=dict(stub_test=True)
+    Sgx=dict(stub_test=stub)
 )  # specify this as True if testing a conversion
+nwb_path_append = "_stub" if stub else ""
+nwbname = mat_path.parent/f"{mat_path.stem}_stub.nwb"
 mt.run_conversion(
-    nwbfile_path=str(mat_path.with_suffix(".nwb")),
+    nwbfile_path=nwbname,
     overwrite=True,
     metadata=metadata,
     conversion_options=conversion_options,
