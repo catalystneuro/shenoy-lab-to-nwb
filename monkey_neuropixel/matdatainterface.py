@@ -58,7 +58,7 @@ class NpxMatDataInterface(BaseDataInterface):
             )
         )
         metadata["Subject"] = dict(subject_id=self.mat_extractor.subject_name)
-        metadata["Ecephys"] = dict(ElectrodeGroup=[dict(location=self.brain_location)])
+        metadata["Ecephys"] = dict(ElectrodeGroup=[dict(name="Probe0",location=self.brain_location)])
         metadata["Behavior"] = dict(
             Position=[
                 dict(
