@@ -1,68 +1,46 @@
 from pathlib import Path
 
 from monkey_neuropixel.converter import NpxNWBConverter
-from nwb_conversion_tools.utils.json_schema import (
-    dict_deep_update
-)
-# retrieve metadata that is common:
-from . import metadata_location_path
-import json
-with open(str(metadata_location_path), "r") as io:
-    metadata_retrieved = json.load(io)
+from nwb_conversion_tools.utils.json_schema import dict_deep_update
 
-pt = Path(
-    r"C:\Users\Saksham\Documents\NWB\shenoy\data\PrimateNeuropixel\P20180323.behavior.mat"
+# retrieve default experiment metadata and sessions list (can be changed in the yaml file):
+from . import metadata_location_path, session_list_location_path
+import yaml
+
+with open(str(metadata_location_path), "r") as io:
+    metadata_default = yaml.load(io, Loader=yaml.FullLoader)
+with open(str(session_list_location_path), "r") as io:
+    session_names_list = yaml.load(io, Loader=yaml.FullLoader)
+
+
+## 1. Run a single session conversion:
+mat_path = Path(
+    r"/mnt/scrap/catalyst_neuro/sakshamsharda/shenoy/PrimateNeuropixel/P20180323.behavior.mat"
 )
-nwbfile_saveloc = pt.with_suffix(".nwb")
-mt = NpxNWBConverter(dict(Mat=dict(filename=str(pt))))
-metadata  = mt.get_metadata()
-metadata = dict_deep_update(metadata, metadata_retrieved)
-conversion_options = dict()
+sglx_path = Path(
+    r"/mnt/scrap/catalyst_neuro/sakshamsharda/shenoy/PrimateNeuropixel/P20180323_g0_t0.imec0.ap.bin.mat"
+)
+converter_args = dict(
+    Mat=dict(filename=str(mat_path)), Sgx=dict(file_path=str(sglx_path))
+)
+# create NWBConverter class:
+mt = NpxNWBConverter(converter_args)
+
+# get and update metadata to go with the NWB file
+metadata = mt.get_metadata()
+metadata = dict_deep_update(metadata, metadata_default)
+
+conversion_options = dict(
+    Sgx=dict(stub_test=True)
+)  # specify this as True if testing a conversion
 mt.run_conversion(
-    nwbfile_path=str(nwbfile_saveloc),
+    nwbfile_path=str(mat_path.with_suffix(".nwb")),
     overwrite=True,
     metadata=metadata,
     conversion_options=conversion_options,
 )
 
-# conversion on smaug script ---------------
-sess_names = [
-    "P20180327",
-    "P20180607",
-    "P20180608",
-    "P20180609",
-    "P20180612",
-    "P20180613",
-    "P20180614",
-    "P20180615",
-    "P20180620",
-    "P20180622",
-    "P20180704",
-    "P20180705",
-    "P20180707",
-    "P20180710",
-    "P20180711",
-    "V20180814",
-    "V20180815",
-    "V20180817",
-    "V20180818",
-    "V20180819",
-    "V20180820",
-    "V20180821",
-    "V20180822",
-    "V20180823",
-    "V20180919",
-    "V20180920",
-    "V20180921",
-    "V20180922",
-    "V20180923",
-    "V20180925",
-    "V20180926",
-    "V20180927",
-    "V20180928",
-    "V20181128",
-    "V20181204",
-]
+## 2. Convert multiple sessions using parallelization:
 
 from monkey_neuropixel.converter import NpxNWBConverter
 from pathlib import Path
@@ -70,7 +48,7 @@ from joblib import Parallel, delayed
 
 mat_pt_list = []
 bin_pt_list = []
-for name in sess_names:
+for name in session_names_list:
     mat_pt = Path(
         fr"/mnt/scrap/catalyst_neuro/sakshamsharda/shenoy/PrimateNeuropixel/{name}/{name}.behavior.mat"
     )
@@ -85,13 +63,18 @@ for name in sess_names:
 def converter(mat_pt, bin_pt):
     arg = dict(Mat=dict(filename=str(mat_pt)), Sgx=dict(file_path=str(bin_pt)))
     nc = NpxNWBConverter(arg)
-    with open(str(metadata_location_path), "r") as io:
-        metadata_retrieved = json.load(io)
     metadata = nc.get_metadata()
-    metadata = dict_deep_update(metadata, metadata_retrieved)
-    nwb_pt = bin_pt.parent / Path(bin_pt.name.split(".")[0] + ".nwb")
-
-    nc.run_conversion(nwbfile_path=str(nwb_pt), overwrite=True, metadata=metadata,conversion_options=dict())
+    metadata = dict_deep_update(metadata, metadata_default)
+    stub = True
+    nwb_path_append = "_stub" if stub else ""
+    nwb_pt = bin_pt.parent / Path(bin_pt.name.split(".")[0] + f"{nwb_path_append}.nwb")
+    conversion_options = dict(Sgx=dict(stub_test=stub))
+    nc.run_conversion(
+        nwbfile_path=str(nwb_pt),
+        overwrite=True,
+        metadata=metadata,
+        conversion_options=conversion_options,
+    )
     print(
         f'**************************conversion run for {mat_pt.name.split(".")[0]}............................'
     )

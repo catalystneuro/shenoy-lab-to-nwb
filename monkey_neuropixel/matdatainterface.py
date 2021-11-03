@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 from typing import Union
-import json
+import yaml
 import pynwb
 from nwb_conversion_tools.basedatainterface import BaseDataInterface
 from nwb_conversion_tools.utils.json_schema import (
@@ -26,7 +26,7 @@ class NpxMatDataInterface(BaseDataInterface):
         assert self.filename.suffix == ".mat", "file_path should be a .mat"
         assert self.filename.exists(), "file_path does not exist"
         with open(str(brain_location_path), "r") as io:
-            brain_location_map = json.load(io)
+            brain_location_map = yaml.load(io, Loader=yaml.FullLoader)
         self.brain_location = brain_location_map.get(
             self.filename.stem.split(".")[0], "PMd"
         )
