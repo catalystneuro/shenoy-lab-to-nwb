@@ -4,7 +4,7 @@ from monkey_neuropixel.converter import NpxNWBConverter
 from nwb_conversion_tools.utils.json_schema import dict_deep_update
 
 # retrieve default experiment metadata and sessions list (can be changed in the yaml file):
-from . import metadata_location_path, session_list_location_path
+from monkey_neuropixel import metadata_location_path, session_list_location_path
 import yaml
 
 with open(str(metadata_location_path), "r") as io:
@@ -15,10 +15,10 @@ with open(str(session_list_location_path), "r") as io:
 
 ## 1. Run a single session conversion:
 mat_path = Path(
-    r"/mnt/scrap/catalyst_neuro/sakshamsharda/shenoy/PrimateNeuropixel/P20180323.behavior.mat"
+    r"/mnt/scrap/catalyst_neuro/sakshamsharda/shenoy/PrimateNeuropixel/P20180323/P20180323.behavior.mat"
 )
 sglx_path = Path(
-    r"/mnt/scrap/catalyst_neuro/sakshamsharda/shenoy/PrimateNeuropixel/P20180323_g0_t0.imec0.ap.bin.mat"
+    r"/mnt/scrap/catalyst_neuro/sakshamsharda/shenoy/PrimateNeuropixel/P20180323/P20180323_g0_t0.imec0.ap.bin"
 )
 converter_args = dict(
     Mat=dict(filename=str(mat_path)), Sgx=dict(file_path=str(sglx_path))

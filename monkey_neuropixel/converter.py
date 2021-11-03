@@ -18,13 +18,6 @@ class ShenoySpikeGLXRecordingInterface(SpikeGLXRecordingInterface):
                 channel_id=ch, property_name="group_name", value="Probe0"
             )
 
-    def get_metadata(self):
-        metadata = super(ShenoySpikeGLXRecordingInterface, self).get_metadata()
-        with open(str(metadata_location_path), "r") as io:
-            metadata_lab = json.load(io)
-        metadata["Ecephys"] = metadata_lab["Ecephys"]
-        return metadata
-
 
 class NpxNWBConverter(NWBConverter):
     data_interface_classes = dict(
