@@ -9,8 +9,6 @@ import yaml
 
 with open(str(metadata_location_path), "r") as io:
     metadata_default = yaml.load(io, Loader=yaml.FullLoader)
-with open(str(session_list_location_path), "r") as io:
-    session_names_list = yaml.load(io, Loader=yaml.FullLoader)
 
 
 ## 1. Run a single session conversion:
@@ -36,7 +34,7 @@ conversion_options = dict(
 nwb_path_append = "_stub" if stub else ""
 nwbname = mat_path.parent/f"{mat_path.stem}_stub.nwb"
 mt.run_conversion(
-    nwbfile_path=nwbname,
+    nwbfile_path=str(nwbname),
     overwrite=True,
     metadata=metadata,
     conversion_options=conversion_options,
@@ -47,7 +45,10 @@ mt.run_conversion(
 from monkey_neuropixel.converter import NpxNWBConverter
 from pathlib import Path
 from joblib import Parallel, delayed
+import yaml
 
+with open(str(session_list_location_path), "r") as io:
+    session_names_list = yaml.load(io, Loader=yaml.FullLoader)
 mat_pt_list = []
 bin_pt_list = []
 for name in session_names_list:

@@ -14,7 +14,7 @@ from pynwb import NWBFile, TimeSeries
 from pynwb.behavior import Position, SpatialSeries, BehavioralTimeSeries
 
 from .matextractor import MatDataExtractor
-from . import brain_location_path, metadata_location_path
+from . import brain_location_path
 
 PathType = Union[str, Path]
 
