@@ -116,6 +116,8 @@ class MazeTaskWidget(widgets.VBox):
                 c+=1
                 self.progress.value = c/(tot_rows*tot_cols)
                 self.progress.description = f'Ploting {self.progress.value*100:.0f} %'
+                if len(trial_rows[a,b]) == 0:
+                    continue
                 trial_row = trial_rows[a,b][0]
                 #plot target positions:
                 target_pos = self.trials['target_positions'][trial_row]

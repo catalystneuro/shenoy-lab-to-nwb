@@ -181,6 +181,8 @@ def draw_graphs(set_progress,args):
             for b in range(tot_cols):
                 c += 1
                 set_progress((str(c), str(tot_rows * tot_cols)))
+                if len(trial_rows[a,b]) == 0:
+                    continue
                 trial_row = trial_rows[a, b][0]
                 # plot target positions:
                 print(trial_row)
