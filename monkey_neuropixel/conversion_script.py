@@ -1,10 +1,10 @@
 from pathlib import Path
 
-from monkey_neuropixel.converter import NpxNWBConverter
+from .converter import NpxNWBConverter
 from nwb_conversion_tools.utils.json_schema import dict_deep_update
 
 # retrieve default experiment metadata and sessions list (can be changed in the yaml file):
-from monkey_neuropixel import metadata_location_path, session_list_location_path
+from . import metadata_location_path, session_list_location_path
 import yaml
 
 with open(str(metadata_location_path), "r") as io:
@@ -42,7 +42,7 @@ mt.run_conversion(
 
 ## 2. Convert multiple sessions using parallelization:
 
-from monkey_neuropixel.converter import NpxNWBConverter
+from .converter import NpxNWBConverter
 from pathlib import Path
 from joblib import Parallel, delayed
 import yaml
