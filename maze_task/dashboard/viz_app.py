@@ -1,12 +1,16 @@
 from uuid import uuid4
 
-import dash
-import dash_labs as dl
+try:
+    import dash
+    import dash_labs as dl
+    from dash import dcc, html
+except ModuleNotFoundError:
+    raise Exception('install dash: conda install dash')
 ## Diskcache
 import diskcache
 import numpy as np
 import plotly.graph_objects as go
-from dash import dcc, html
+
 from flask_caching import Cache
 from nwbwidgets.utils.timeseries import timeseries_time_to_ind
 from plotly.subplots import make_subplots

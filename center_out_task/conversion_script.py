@@ -1,7 +1,11 @@
 from .coutnwbconverter import COutNWBConverter
 from pathlib import Path
 from joblib import Parallel, delayed
-import cv2
+
+try:
+    import cv2
+except ModuleNotFoundError:
+    raise Exception('install cv2: conda install open-cv')
 
 def convert(source_folder):
 # retrieve the correct files from source path:

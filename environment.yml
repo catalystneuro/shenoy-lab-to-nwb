@@ -1,0 +1,14 @@
+name: shenoy_lab_nwb
+
+channels:
+  - conda-forge
+
+dependencies:
+  - pip:
+    - nwbwidgets
+    - dandi
+  - python=3.8
+  - pip
+  - ipywidgets
+  - plotly
+  - "h5py>=3.2"
