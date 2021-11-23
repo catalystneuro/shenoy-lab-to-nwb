@@ -1,20 +1,20 @@
 from datetime import datetime
 from pathlib import Path
 from typing import Union
+
 import yaml
-import pynwb
 from nwb_conversion_tools.basedatainterface import BaseDataInterface
 from nwb_conversion_tools.utils.json_schema import (
     get_base_schema,
     get_schema_from_hdmf_class,
     get_schema_for_NWBFile,
-    dict_deep_update
+    dict_deep_update,
 )
 from pynwb import NWBFile, TimeSeries
 from pynwb.behavior import Position, SpatialSeries, BehavioralTimeSeries
 
-from .matextractor import MatDataExtractor
 from . import brain_location_path
+from .matextractor import MatDataExtractor
 
 PathType = Union[str, Path]
 
@@ -39,7 +39,6 @@ class NpxMatDataInterface(BaseDataInterface):
         metadata_schema["properties"]["Behavior"] = get_base_schema()
         metadata_schema["properties"]["NWBFile"] = get_schema_for_NWBFile()
 
-
         metadata_schema["properties"]["Behavior"]["properties"] = dict(
             Position=dict(
                 type="array", items=get_schema_from_hdmf_class(SpatialSeries)
@@ -58,10 +57,16 @@ class NpxMatDataInterface(BaseDataInterface):
             )
         )
         metadata["Subject"] = dict(subject_id=self.mat_extractor.subject_name)
-        metadata["Ecephys"] = dict(ElectrodeGroup=[dict(name="Probe0",
-                                                        description="recorded from the most distal electrode pads (closest to the tip)",
-                                                        device="Neuropixels",
-                                                        location=self.brain_location)])
+        metadata["Ecephys"] = dict(
+            ElectrodeGroup=[
+                dict(
+                    name="Probe0",
+                    description="recorded from the most distal electrode pads (closest to the tip)",
+                    device="Neuropixels",
+                    location=self.brain_location,
+                )
+            ]
+        )
         metadata["Behavior"] = dict(
             Position=[
                 dict(

@@ -1,15 +1,14 @@
 from pathlib import Path
 
-from .converter import NpxNWBConverter
+import yaml
 from nwb_conversion_tools.utils.json_schema import dict_deep_update
 
 # retrieve default experiment metadata and sessions list (can be changed in the yaml file):
 from . import metadata_location_path, session_list_location_path
-import yaml
+from .converter import NpxNWBConverter
 
 with open(str(metadata_location_path), "r") as io:
     metadata_default = yaml.load(io, Loader=yaml.FullLoader)
-
 
 ## 1. Run a single session conversion:
 mat_path = Path(
@@ -70,7 +69,7 @@ def converter(mat_pt, bin_pt):
     metadata = dict_deep_update(metadata, metadata_default)
     stub = True
     nwb_path_append = "_stub" if stub else ""
-    nwb_pt = bin_pt.parent / Path(bin_pt.name.split(".")[0] + f"{nwb_path_append}.nwb")
+    nwb_pt = bin_pt.parent/Path(bin_pt.name.split(".")[0] + f"{nwb_path_append}.nwb")
     conversion_options = dict(Sgx=dict(stub_test=stub))
     nc.run_conversion(
         nwbfile_path=str(nwb_pt),

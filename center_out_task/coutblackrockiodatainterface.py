@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Union
+
 import numpy as np
 from nwb_conversion_tools import BlackrockRecordingExtractorInterface
 
@@ -7,37 +8,43 @@ PathType = Union[str, Path]
 
 
 class COutBlackrockIODataInterface(BlackrockRecordingExtractorInterface):
-
-    def __init__(self, nsx_override: PathType, filename: PathType = ''):
+    def __init__(self, nsx_override: PathType, filename: PathType = ""):
         self.nsx_loc = Path(nsx_override)
         super().__init__(filename=filename, nsx_override=nsx_override)
-        if self.nsx_loc.stem[-1]!='1':
+        if self.nsx_loc.stem[-1] != "1":
             self.recording_extractor.set_times(
-                np.nan*np.ones((self.recording_extractor.get_num_frames(),)))
+                np.nan*np.ones((self.recording_extractor.get_num_frames(),))
+            )
         if "M1" in self.nsx_loc.parent.name:
-            self._region = 'M1 Motor Cortex'
+            self._region = "M1 Motor Cortex"
             self.recording_extractor.set_channel_groups([1]*96)
         elif "PMd" in self.nsx_loc.parent.name:
-            self._region = 'Pre-Motor Cortex, dorsal'
+            self._region = "Pre-Motor Cortex, dorsal"
             self.recording_extractor.set_channel_groups([2]*96)
             self.recording_extractor._channel_ids = [
                 i + 96 for i in self.recording_extractor._channel_ids
             ]
         self.recording_extractor.clear_channels_property("name")
         for chan_id in self.recording_extractor.get_channel_ids():
-            self.recording_extractor.set_channel_property(chan_id, 'filtering', '2000Hz')
-            self.recording_extractor.set_channel_property(chan_id, 'brain_area', self._region)
+            self.recording_extractor.set_channel_property(
+                chan_id, "filtering", "2000Hz"
+            )
+            self.recording_extractor.set_channel_property(
+                chan_id, "brain_area", self._region
+            )
 
     @classmethod
     def get_source_schema(cls):
         source_schema = super().get_source_schema()
-        source_schema['properties']['nsx_override']['format'] = 'file'
-        source_schema['properties']['nsx_override']['description'] = 'Path to Blackrock file.'
+        source_schema["properties"]["nsx_override"]["format"] = "file"
+        source_schema["properties"]["nsx_override"][
+            "description"
+        ] = "Path to Blackrock file."
         return source_schema
 
     def get_metadata_schema(self):
         metadata_schema = super().get_metadata_schema()
-        metadata_schema['properties']['Ecephys']['additionalProperties'] = True
+        metadata_schema["properties"]["Ecephys"]["additionalProperties"] = True
         return metadata_schema
 
     def get_metadata(self):
@@ -47,7 +54,7 @@ class COutBlackrockIODataInterface(BlackrockRecordingExtractorInterface):
                 ElectrodeGroup=[],
             )
         )
-        ephys_name = self.nsx_loc.parent.stem+'_'+self.nsx_loc.stem[-1]
+        ephys_name = self.nsx_loc.parent.stem + "_" + self.nsx_loc.stem[-1]
         metadata["Ecephys"].update(
             {
                 f"ElectricalSeries_{ephys_name}": dict(

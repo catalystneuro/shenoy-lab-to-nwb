@@ -1,6 +1,7 @@
-from nwb_conversion_tools import BlackrockRecordingExtractorInterface
 from pathlib import Path
 from typing import Union
+
+from nwb_conversion_tools import BlackrockRecordingExtractorInterface
 
 PathType = Union[str, Path]
 
@@ -10,22 +11,28 @@ class ShenoyBlackRockRecordingDataInterface(BlackrockRecordingExtractorInterface
         self.nsx_loc = Path(filename)
         super().__init__(filename=filename)
         if "B" in self.nsx_loc.name:
-            self._region = 'M1 Motor Cortex'
+            self._region = "M1 Motor Cortex"
             self.recording_extractor._channel_ids = [
                 i + 96 for i in self.recording_extractor._channel_ids
             ]
-            self.recording_extractor.set_channel_groups([2]*96)
+            self.recording_extractor.set_channel_groups([2] * 96)
         else:
-            self._region = 'Pre-Motor Cortex, dorsal'
-            self.recording_extractor.set_channel_groups([1]*96)
+            self._region = "Pre-Motor Cortex, dorsal"
+            self.recording_extractor.set_channel_groups([1] * 96)
         self.recording_extractor.clear_channels_property("name")
         for chan_id in self.recording_extractor.get_channel_ids():
-            self.recording_extractor.set_channel_property(chan_id, 'filtering','1000Hz')
-            self.recording_extractor.set_channel_property(chan_id, 'brain_area',self._region)
+            self.recording_extractor.set_channel_property(
+                chan_id, "filtering", "1000Hz"
+            )
+            self.recording_extractor.set_channel_property(
+                chan_id, "brain_area", self._region
+            )
 
     def get_metadata_schema(self):
-        metadata_schema = super(ShenoyBlackRockRecordingDataInterface, self).get_metadata_schema()
-        metadata_schema['properties']['Ecephys']['additionalProperties'] = True
+        metadata_schema = super(
+            ShenoyBlackRockRecordingDataInterface, self
+        ).get_metadata_schema()
+        metadata_schema["properties"]["Ecephys"]["additionalProperties"] = True
         return metadata_schema
 
     def get_metadata(self):
@@ -73,4 +80,3 @@ class ShenoyBlackRockRecordingDataInterface(BlackrockRecordingExtractorInterface
         ]
 
         return metadata
-

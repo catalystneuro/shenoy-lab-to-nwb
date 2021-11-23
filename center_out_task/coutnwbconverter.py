@@ -1,12 +1,11 @@
-from nwb_conversion_tools import NWBConverter
-from .coutblackrockiodatainterface import COutBlackrockIODataInterface
-from .matdatainterface import COutMatDataInterface
-from .coutmoviedatainterface import CoutMoviedataInterface
-from pathlib import Path
 import uuid
-import pytz
-from datetime import datetime
+
+from nwb_conversion_tools import NWBConverter
 from nwb_conversion_tools.utils.json_schema import dict_deep_update
+
+from .coutblackrockiodatainterface import COutBlackrockIODataInterface
+from .coutmoviedatainterface import CoutMoviedataInterface
+from .matdatainterface import COutMatDataInterface
 
 
 class COutNWBConverter(NWBConverter):
@@ -33,7 +32,6 @@ class COutNWBConverter(NWBConverter):
         """
         super().__init__(source_data)
 
-
     def get_metadata(self):
         metadata_base = dict()
         metadata_base["NWBFile"] = dict(
@@ -44,5 +42,5 @@ class COutNWBConverter(NWBConverter):
             institution="Stanford University",
             related_publications="10.1371/journal.pcbi.1006808",
         )
-        metadata_base = dict_deep_update(metadata_base,super().get_metadata())
+        metadata_base = dict_deep_update(metadata_base, super().get_metadata())
         return metadata_base
