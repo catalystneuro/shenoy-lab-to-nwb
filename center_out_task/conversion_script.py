@@ -4,10 +4,7 @@ from joblib import Parallel, delayed
 
 from .coutnwbconverter import COutNWBConverter
 
-try:
-    import cv2
-except ModuleNotFoundError:
-    raise Exception("install cv2: conda install open-cv")
+import cv2
 
 
 def convert(source_folder):
