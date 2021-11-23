@@ -1,10 +1,10 @@
-from nwb_conversion_tools import NWBConverter
-from .shenoymatdatainterface import ShenoyMatDataInterface
-from .shenoyblackrockrecordingdatainterface import ShenoyBlackRockRecordingDataInterface
-from pathlib import Path
 import uuid
-import pytz
 from datetime import datetime
+
+from nwb_conversion_tools import NWBConverter
+
+from .shenoyblackrockrecordingdatainterface import ShenoyBlackRockRecordingDataInterface
+from .shenoymatdatainterface import ShenoyMatDataInterface
 
 
 class ChurchlandNWBConverter(NWBConverter):
@@ -48,16 +48,17 @@ class ChurchlandNWBConverter(NWBConverter):
             experimenter=["Matthew T. Kaufman", "Mark M. Churchland"],
             experiment_description="",
             institution="Stanford University",
-            related_publications=' '.join([
-                "10.1038/nature11129",
-                "10.1152/jn.00892.2011",
-                "10.1038/nn.3643",
-                "10.1038/nn.4042",
-                "10.1146/annurev-neuro-062111-150509",
-                "10.7554/eLife.04677"""
-                "10.1523/ENEURO.0085-16.2016",
-                "10.1038/s41592-018-0109-9"
-            ]),
+            related_publications=" ".join(
+                [
+                    "10.1038/nature11129",
+                    "10.1152/jn.00892.2011",
+                    "10.1038/nn.3643",
+                    "10.1038/nn.4042",
+                    "10.1146/annurev-neuro-062111-150509",
+                    "10.7554/eLife.04677" "" "10.1523/ENEURO.0085-16.2016",
+                    "10.1038/s41592-018-0109-9",
+                ]
+            ),
         )
         metadata_base["Subject"] = dict(
             sex="M", species="Macaca mulatta", subject_id=self.subject_name

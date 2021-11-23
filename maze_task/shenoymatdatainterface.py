@@ -3,7 +3,6 @@ from typing import Union
 
 import numpy as np
 from nwb_conversion_tools.basedatainterface import BaseDataInterface
-from nwb_conversion_tools.utils.json_schema import get_base_schema
 from pynwb import NWBFile
 from pynwb.behavior import Position
 
@@ -18,9 +17,7 @@ class ShenoyMatDataInterface(BaseDataInterface):
         self.file_path = Path(filename)
         assert self.file_path.suffix == ".mat", "file_path should be a .mat"
         assert self.file_path.exists(), "file_path does not exist"
-        self.mat_extractor = MatDataExtractor(
-            self.file_path, monkey_name=subject_name
-        )
+        self.mat_extractor = MatDataExtractor(self.file_path, monkey_name=subject_name)
 
     def _extract_channel_spike_times(self):
         trial_spike_times = self.mat_extractor.extract_unit_spike_times()
