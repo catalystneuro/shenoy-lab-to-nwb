@@ -28,3 +28,8 @@ python -m ipykernel install --user --name=shenoy_lab_nwb
 cd nwb_usage/
 jupyter notebok analysis_script.ipynb
 ```
+
+### Intructions to convert datasets to NWB:
+Each of the three aims have a folder that houses the conversion modules
+and `conversion_scipt.py`. The folder structure each conversion script expects is like
+on [this google drive](https://drive.google.com/drive/folders/1mP3MCT_hk2v6sFdHnmP_6M0KEFg1r2g_)
