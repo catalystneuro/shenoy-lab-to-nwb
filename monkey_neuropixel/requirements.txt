@@ -1,0 +1,5 @@
+nwb_conversion_tools@git+https://github.com/catalystneuro/nwb-conversion-tools.git@859fdaaaee7dfd5285d2bbaebc7b9792587acf09
+nwbwidgets
+pynwb
+numpy
+joblib

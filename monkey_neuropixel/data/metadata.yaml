@@ -23,6 +23,6 @@ Ecephys:
       not considered part of this dataset. This last step was important for achieving
       consistent, stable sorts with KiloSort 2.0 "
   Device:
-  - name: Probe0
-    description: 3A Neuropixels
-    manufacturer: Imec
+    - name: Probe0
+      description: 3A Neuropixels
+      manufacturer: Imec

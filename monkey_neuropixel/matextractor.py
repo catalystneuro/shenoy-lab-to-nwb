@@ -1,9 +1,10 @@
 from collections import defaultdict
 from pathlib import Path
-from tqdm import tqdm
+from time import time
+
 import h5py
 import numpy as np
-from time import time
+from tqdm import tqdm
 
 
 class MatDataExtractor:
@@ -29,10 +30,10 @@ class MatDataExtractor:
         stop_time_list = []
         for trial_no in range(self._no_trials):
             start_time_list.append(
-                self._open_file[self.trials["npix_start_idx"][0, trial_no]][0, 0] / 3e4
+                self._open_file[self.trials["npix_start_idx"][0, trial_no]][0, 0]/3e4
             )
             stop_time_list.append(
-                self._open_file[self.trials["npix_stop_idx"][0, trial_no]][0, 0] / 3e4
+                self._open_file[self.trials["npix_stop_idx"][0, trial_no]][0, 0]/3e4
             )
         return np.array(start_time_list), np.array(stop_time_list)
 
@@ -44,9 +45,9 @@ class MatDataExtractor:
 
         def get_val(name, trial_no):
             return (
-                np.array(self._return_trial_value(name, trial_no=trial_no)).flatten()[0]
-                * 1e-3
-                + trial_start[trial_no] * 1e-3
+                    np.array(self._return_trial_value(name, trial_no=trial_no)).flatten()[0]
+                    *1e-3
+                    + trial_start[trial_no]*1e-3
             )
 
         events_list = {
@@ -83,7 +84,7 @@ class MatDataExtractor:
                 data=np.concatenate(
                     [
                         np.array(self._return_trial_value(beh_fields[field], i)).T
-                        * 1e-3
+                        *1e-3
                         for i in range(self._no_trials)
                     ],
                     axis=0,
@@ -93,7 +94,7 @@ class MatDataExtractor:
         beh_dict["times"].update(
             data=np.concatenate(
                 [
-                    np.array(self._return_trial_value("hand_time", i)).T * 1e-3
+                    np.array(self._return_trial_value("hand_time", i)).T*1e-3
                     + trial_start[i]
                     for i in range(self._no_trials)
                 ],
@@ -149,8 +150,8 @@ class MatDataExtractor:
             for id in spike_ids:
                 spike_times_all_list[id].extend(
                     (
-                        self._open_file[sptimes[id, 0]][:].flatten() * 1e-3
-                        + trial_start[trl]
+                            self._open_file[sptimes[id, 0]][:].flatten()*1e-3
+                            + trial_start[trl]
                     ).tolist()
                 )
         print(time() - start)
@@ -165,19 +166,19 @@ class MatDataExtractor:
         custom_unit_args = {
             "cluster_amplitude": "peak to peak amplitude in uV",
             "cluster_is_localized": "boolean indicator of whether or not center of mass of "
-            "waveform is well defined",
+                                    "waveform is well defined",
             # 'cluster_layer':'one of "Superficial", "Deep", "White" (white matter), or '
             #                 '"Unknown", cluster layer identified via current source density '
             #                 'and peak first waveforms analysis',
             "cluster_position_aligned": "spatial positions of neurons on probe, "
-            "aligned using CSD analysis. for Y, 0 corresponds"
-            " to the nominal cortical surface, and increasingly "
-            "negative values indicate deeper in cortex towards white matter",
+                                        "aligned using CSD analysis. for Y, 0 corresponds"
+                                        " to the nominal cortical surface, and increasingly "
+                                        "negative values indicate deeper in cortex towards white matter",
             "cluster_positions": "spatial positions of neurons on probe, using raw probe coordinates "
-            "from the channel map. 0 corresponds to the tip of the probe, "
-            "and increasingly positive values indicate shallower in cortex "
-            "towards the surface (note: same orientation as aligned, "
-            "different offset)",
+                                 "from the channel map. 0 corresponds to the tip of the probe, "
+                                 "and increasingly positive values indicate shallower in cortex "
+                                 "towards the surface (note: same orientation as aligned, "
+                                 "different offset)",
             # 'cluster_ratings':'one of "good" or "unstable", individually hand-reviewed indicator '
             #                   'of neuron stability over trials during the session'
         }

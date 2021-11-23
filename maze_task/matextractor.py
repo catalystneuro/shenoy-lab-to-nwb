@@ -1,7 +1,7 @@
+from pathlib import Path
+
 import numpy as np
 import scipy.io as scio
-from pathlib import Path
-import neo
 
 
 class MatDataExtractor:
@@ -17,15 +17,13 @@ class MatDataExtractor:
     def good_trials(self):
         good_trials = []
         for i in range(self.R.shape[0]):
-            if self.R["CerebusInfoA"][i].shape[0]==1:
+            if self.R["CerebusInfoA"][i].shape[0] == 1:
                 good_trials.append(i)
         return good_trials
 
-
     def get_trial_ids(self):
         return [
-            self.R["CerebusInfoA"][i]["trialID"][0, 0][0, 0]
-            for i in self._good_trials
+            self.R["CerebusInfoA"][i]["trialID"][0, 0][0, 0] for i in self._good_trials
         ]
 
     def extract_unit_spike_times(self, trial_nos=None):
@@ -60,8 +58,8 @@ class MatDataExtractor:
         # find mean inter_trial times:
         inter_trial_intervals = []
         trial_conti = np.diff(self._good_trials)
-        for i in range(len(self._good_trials)-1):
-            if trial_conti[i]==1:
+        for i in range(len(self._good_trials) - 1):
+            if trial_conti[i] == 1:
                 inter_trial_intervals.append(trial_times[i + 1, 0] - trial_times[i, 1])
             else:
                 inter_trial_intervals.append(np.nan)
@@ -103,7 +101,7 @@ class MatDataExtractor:
                                 self.R[event[0]][i][0, 0] / 1e3 + trial_times[no, 0]
                                 if self.R[event[0]][i].shape[0] != 0
                                 else np.nan
-                                for no,i in enumerate(trial_nos)
+                                for no, i in enumerate(trial_nos)
                             ]
                         ),
                         description=event[2],
@@ -177,8 +175,8 @@ class MatDataExtractor:
                 "tells you the result of our algorithm for determining whether this reach looked like the other reaches "
                 "for this condition. To get it, we correlated the hand velocity for every pair of trials with that "
                 "condition, accepted the reach with the most high correlations as prototypical, then marked as "
-                "“consistent” only reaches that had a high enough correlation with the prototypical reach."
-            ]
+                "“consistent” only reaches that had a high enough correlation with the prototypical reach.",
+            ],
         ]
         for event in events:
             if event[0] in self.R.dtype.fields.keys():
@@ -203,7 +201,7 @@ class MatDataExtractor:
         offset_val = (
             offset_hand_Y_nitschke if self.monkey_name == "N" else offset_hand_Y_jenkins
         )
-        for no,trial_no in enumerate(trial_nos):
+        for no, trial_no in enumerate(trial_nos):
             timestamps = (
                 trial_times[no, 0]
                 + np.arange(len(self.R["EYE"][trial_no][0, 0]["X"].squeeze())) / 1000.0
@@ -251,7 +249,9 @@ class MatDataExtractor:
                 maze_details_list.append(
                     dict(
                         name=maze_data[1],
-                        data=np.array([self.R[maze_data[0]][i][0, 0] for i in trial_nos]),
+                        data=np.array(
+                            [self.R[maze_data[0]][i][0, 0] for i in trial_nos]
+                        ),
                         description=maze_data[2],
                     )
                 )

@@ -1,11 +1,10 @@
-from nwb_conversion_tools import NWBConverter, SpikeGLXRecordingInterface
-from monkey_neuropixel.matdatainterface import NpxMatDataInterface
-from pathlib import Path
-from nwb_conversion_tools.utils.json_schema import dict_deep_update, FilePathType
 import uuid
-import json
 from typing import Optional
-from . import metadata_location_path
+
+from nwb_conversion_tools import NWBConverter, SpikeGLXRecordingInterface
+from nwb_conversion_tools.utils.json_schema import FilePathType
+
+from monkey_neuropixel.matdatainterface import NpxMatDataInterface
 
 
 class ShenoySpikeGLXRecordingInterface(SpikeGLXRecordingInterface):
@@ -21,8 +20,7 @@ class ShenoySpikeGLXRecordingInterface(SpikeGLXRecordingInterface):
 
 class NpxNWBConverter(NWBConverter):
     data_interface_classes = dict(
-        Sgx=ShenoySpikeGLXRecordingInterface,
-        Mat=NpxMatDataInterface,
+        Sgx=ShenoySpikeGLXRecordingInterface, Mat=NpxMatDataInterface,
     )
 
     def get_metadata(self):

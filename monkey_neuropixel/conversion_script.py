@@ -1,17 +1,14 @@
 from pathlib import Path
 
-from monkey_neuropixel.converter import NpxNWBConverter
+import yaml
 from nwb_conversion_tools.utils.json_schema import dict_deep_update
 
 # retrieve default experiment metadata and sessions list (can be changed in the yaml file):
-from monkey_neuropixel import metadata_location_path, session_list_location_path
-import yaml
+from . import metadata_location_path, session_list_location_path
+from .converter import NpxNWBConverter
 
 with open(str(metadata_location_path), "r") as io:
     metadata_default = yaml.load(io, Loader=yaml.FullLoader)
-with open(str(session_list_location_path), "r") as io:
-    session_names_list = yaml.load(io, Loader=yaml.FullLoader)
-
 
 ## 1. Run a single session conversion:
 mat_path = Path(
@@ -36,7 +33,7 @@ conversion_options = dict(
 nwb_path_append = "_stub" if stub else ""
 nwbname = mat_path.parent/f"{mat_path.stem}_stub.nwb"
 mt.run_conversion(
-    nwbfile_path=nwbname,
+    nwbfile_path=str(nwbname),
     overwrite=True,
     metadata=metadata,
     conversion_options=conversion_options,
@@ -44,10 +41,13 @@ mt.run_conversion(
 
 ## 2. Convert multiple sessions using parallelization:
 
-from monkey_neuropixel.converter import NpxNWBConverter
+from .converter import NpxNWBConverter
 from pathlib import Path
 from joblib import Parallel, delayed
+import yaml
 
+with open(str(session_list_location_path), "r") as io:
+    session_names_list = yaml.load(io, Loader=yaml.FullLoader)
 mat_pt_list = []
 bin_pt_list = []
 for name in session_names_list:
@@ -69,7 +69,7 @@ def converter(mat_pt, bin_pt):
     metadata = dict_deep_update(metadata, metadata_default)
     stub = True
     nwb_path_append = "_stub" if stub else ""
-    nwb_pt = bin_pt.parent / Path(bin_pt.name.split(".")[0] + f"{nwb_path_append}.nwb")
+    nwb_pt = bin_pt.parent/Path(bin_pt.name.split(".")[0] + f"{nwb_path_append}.nwb")
     conversion_options = dict(Sgx=dict(stub_test=stub))
     nc.run_conversion(
         nwbfile_path=str(nwb_pt),
