@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Union
 
 import numpy as np
-from nwb_conversion_tools.basedatainterface import BaseDataInterface
+from neuroconv.basedatainterface import BaseDataInterface
 from pynwb import NWBFile
 from pynwb.behavior import Position
 
