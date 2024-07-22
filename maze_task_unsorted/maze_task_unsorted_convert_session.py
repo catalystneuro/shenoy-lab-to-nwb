@@ -17,17 +17,13 @@ def session_to_nwb(
     output_dir_path = Path(output_dir_path)
     output_dir_path.mkdir(parents=True, exist_ok=True)
 
-    datafile_name = datafile_names[0]
-    file_path = data_dir_path / datafile_name
-    es_key = f"ElectricalSeries{file_path.stem[-4:]}"
-    source_data = dict(
-        A1=dict(file_path=file_path, es_key=es_key),
-        B1=dict(file_path=data_dir_path / datafile_names[1], es_key=datafile_names[1][-8:-4]),
-    )
-    conversion_options = dict(
-        A1=dict(write_as="processed"),
-        B1=dict(write_as="processed"),
-    )
+    source_data, conversion_options = {}, {}
+    for datafile_name in datafile_names:
+        file_path = data_dir_path / datafile_name
+        es_key = f"ElectricalSeries{file_path.stem[-4:]}"
+        datainterface_key = file_path.stem[-4] + file_path.stem[-1]
+        source_data[datainterface_key] = dict(file_path=file_path, es_key=es_key)
+        conversion_options[datainterface_key] = dict(write_as="processed")
 
     converter = MazeTaskUnsortedNWBConverter(source_data=source_data)
     metadata = converter.get_metadata()
@@ -39,7 +35,7 @@ def session_to_nwb(
     pst = timezone("US/Pacific")
     metadata["NWBFile"]["session_start_time"] = datetime.strptime(data_dir_path.name, "%Y-%m-%d").replace(tzinfo=pst)
 
-    nwbfile_path = output_dir_path / f"{file_path.stem}.nwb"
+    nwbfile_path = output_dir_path / f"{data_dir_path.name}.nwb"
 
     converter.run_conversion(
         metadata=metadata,
