@@ -1,6 +1,7 @@
 from neuroconv.datainterfaces import BlackrockRecordingInterface
 from spikeinterface.extractors import BlackrockRecordingExtractor
 from neuroconv.utils import FilePathType
+import numpy as np
 
 class ShenoyBlackrockRecordingInterface(BlackrockRecordingInterface):
     Extractor = BlackrockRecordingExtractor
@@ -9,9 +10,9 @@ class ShenoyBlackrockRecordingInterface(BlackrockRecordingInterface):
         super().__init__(file_path=file_path, es_key=es_key)
         if "B" in file_path.name:
             self._region = "M1 Motor Cortex"
-            self.recording_extractor._channel_ids = [
-                i + 96 for i in self.recording_extractor._channel_ids
-            ]
+            self.recording_extractor._main_ids = np.array([
+                str(int(i) + 96) for i in self.recording_extractor._main_ids
+            ])
             self.recording_extractor.set_channel_groups([2] * 96)
         else:
             self._region = "Pre-Motor Cortex, dorsal"

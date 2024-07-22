@@ -20,7 +20,14 @@ def session_to_nwb(
     datafile_name = datafile_names[0]
     file_path = data_dir_path / datafile_name
     es_key = f"ElectricalSeries{file_path.stem[-4:]}"
-    source_data = dict(BlackRock=dict(file_path=file_path, es_key=es_key))
+    source_data = dict(
+        A1=dict(file_path=file_path, es_key=es_key),
+        B1=dict(file_path=data_dir_path / datafile_names[1], es_key=datafile_names[1][-8:-4]),
+    )
+    conversion_options = dict(
+        A1=dict(write_as="processed"),
+        B1=dict(write_as="processed"),
+    )
 
     converter = MazeTaskUnsortedNWBConverter(source_data=source_data)
     metadata = converter.get_metadata()
@@ -37,6 +44,7 @@ def session_to_nwb(
     converter.run_conversion(
         metadata=metadata,
         nwbfile_path=nwbfile_path,
+        conversion_options=conversion_options,
     )
 
 def main():
@@ -44,6 +52,15 @@ def main():
     output_dir_path = Path("/Volumes/T7/CatalystNeuro/NWB/Shenoy/conversion_nwb")
     datafile_names = [
         "datafileA001.ns2",
+        "datafileB001.ns2",
+        "datafileA002.ns2",
+        "datafileB002.ns2",
+        "datafileA003.ns2",
+        "datafileB003.ns2",
+        "datafileA004.ns2",
+        "datafileB004.ns2",
+        "datafileA005.ns2",
+        "datafileB005.ns2",
     ]
     if output_dir_path.exists():
         shutil.rmtree(output_dir_path, ignore_errors=True)
