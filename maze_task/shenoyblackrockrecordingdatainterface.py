@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Union
 
-from nwb_conversion_tools import BlackrockRecordingExtractorInterface
+from nwb_conversion_tools.basedatainterface import BlackrockRecordingExtractorInterface
 
 PathType = Union[str, Path]
 
