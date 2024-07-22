@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytz
 
-from maze_task.churchlandnwbconverter import ChurchlandNWBConverter
+from .churchlandnwbconverter import ChurchlandNWBConverter
 
 
 def convert(source_folder):
@@ -59,10 +59,8 @@ def convert(source_folder):
 
 
 if __name__ == "__main__":
-    # source_folder = Path(
-    #     r"C:\Users\Saksham\Documents\NWB\shenoy\data\Nitschke\spikesorted"
-    # )
-    # for no, folder in enumerate(source_folder.iterdir()):
-    #     convert(folder)
-    folder = Path("/Volumes/T7/CatalystNeuro/NWB/Shenoy/2010-09-23")
-    convert(source_folder=folder)
+    source_folder = Path(
+        r"C:\Users\Saksham\Documents\NWB\shenoy\data\Nitschke\spikesorted"
+    )
+    for no, folder in enumerate(source_folder.iterdir()):
+        convert(folder)

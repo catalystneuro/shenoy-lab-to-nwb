@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from neuroconv import NWBConverter
+from nwb_conversion_tools import NWBConverter
 from .shenoyblackrockrecordingdatainterface import ShenoyBlackRockRecordingDataInterface
 from .shenoymatdatainterface import ShenoyMatDataInterface
 

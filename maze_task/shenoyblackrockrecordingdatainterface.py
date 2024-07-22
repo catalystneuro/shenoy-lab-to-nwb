@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Union
 
-from neuroconv.datainterfaces import BlackrockRecordingInterface as BlackrockRecordingExtractorInterface
+from nwb_conversion_tools import BlackrockRecordingExtractorInterface
 
 PathType = Union[str, Path]
 
