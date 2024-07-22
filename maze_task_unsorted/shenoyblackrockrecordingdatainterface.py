@@ -19,6 +19,7 @@ class ShenoyBlackrockRecordingInterface(BlackrockRecordingInterface):
             self.recording_extractor.set_channel_groups([1] * 96)
         self.recording_extractor.set_property("filtering", ["1000Hz"]*96)
         self.recording_extractor.set_property("brain_area", [self._region]*96)
+        self.recording_extractor.set_property("channel_name", [f"chan{i}" for i in self.recording_extractor.channel_ids])
 
     def get_metadata(self):
         metadata = super().get_metadata()
