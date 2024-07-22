@@ -1,4 +1,4 @@
-from neuroconv.utils import FolderPathType, load_dict_from_file, dict_deep_update
+from neuroconv.utils import FolderPathType, FilePathType, load_dict_from_file, dict_deep_update
 from pathlib import Path
 import shutil
 from pytz import timezone
@@ -10,7 +10,8 @@ def session_to_nwb(
     *,
     data_dir_path: FolderPathType,
     output_dir_path: FolderPathType,
-    datafile_names: list[str],
+    datafile_names: list[FilePathType],
+    matfile_name: FilePathType,
     verbose: bool = True,
 ):
     data_dir_path = Path(data_dir_path)
@@ -24,6 +25,7 @@ def session_to_nwb(
         datainterface_key = file_path.stem[-4] + file_path.stem[-1]
         source_data[datainterface_key] = dict(file_path=file_path, es_key=es_key)
         conversion_options[datainterface_key] = dict(write_as="processed")
+    source_data["Mat"] = dict(filename=data_dir_path / matfile_name, subject_name="N")
 
     converter = MazeTaskUnsortedNWBConverter(source_data=source_data)
     metadata = converter.get_metadata()
@@ -58,12 +60,14 @@ def main():
         "datafileA005.ns2",
         "datafileB005.ns2",
     ]
+    matfile_name = "RC,2010-09-23,1-2-3-4-5.mat"
     if output_dir_path.exists():
         shutil.rmtree(output_dir_path, ignore_errors=True)
     session_to_nwb(
         data_dir_path=data_dir_path,
         output_dir_path=output_dir_path,
         datafile_names=datafile_names,
+        matfile_name=matfile_name,
     )
 
 if __name__ == "__main__":
