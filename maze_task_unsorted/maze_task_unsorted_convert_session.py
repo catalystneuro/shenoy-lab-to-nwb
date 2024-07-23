@@ -37,6 +37,7 @@ def session_to_nwb(
     pst = timezone("US/Pacific")
     metadata["NWBFile"]["session_start_time"] = datetime.strptime(data_dir_path.name, "%Y-%m-%d").replace(tzinfo=pst)
     metadata["NWBFile"]["session_id"] = metadata["NWBFile"]["session_start_time"].strftime("%Y%m%d")
+    metadata["Subject"]["date_of_birth"] = datetime.datetime(2005, 4, 14, tzinfo=pst)
 
     nwbfile_path = output_dir_path / f"{data_dir_path.name}.nwb"
 
