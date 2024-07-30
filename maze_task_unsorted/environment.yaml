@@ -1,0 +1,9 @@
+name: shenoy_lab_to_nwb_env
+channels:
+  - defaults
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+    - neuroconv
+    - spikeinterface
