@@ -28,9 +28,10 @@ class ShenoyBlackrockRecordingInterface(BlackrockRecordingInterface):
         es_key = self.es_key
 
         metadata["Ecephys"][es_key]["description"] = (
-        f"LFP signal for array {file_path.stem[8]}, segment {file_path.stem[-1]}"
-        f"data for both arrays A,B in the same segment should be, but is not of the same time length"
-        f"and cannot be synced due to lack of time stamps. Ignore the starting times."
+            f"LFP signal for array {file_path.stem[8]}, segment {file_path.stem[-1]}. "
+            f"The starting time places this segment at the offset applied to its trials. Array A shares a clock "
+            f"with the trials and spikes; array B was recorded by a second system and may be offset from array A "
+            f"by tens of ms and drift from its stated rate by about 10 ppm."
         )
         metadata["Ecephys"]["Device"] = [
             dict(

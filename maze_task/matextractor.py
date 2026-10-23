@@ -13,6 +13,8 @@ class MatDataExtractor:
         self.SU = rfile["SU"]
         self._good_trials = self.good_trials()
         self._no_units = self.SU[0, 0]["unitLookup"].shape[0]
+        # durations in seconds of the array A recording files (datafileA001, A002, ...), if known
+        self.segment_durations = None
 
     def good_trials(self):
         good_trials = []
@@ -41,7 +43,21 @@ class MatDataExtractor:
 
     def extract_trial_times(self, trial_nos=None):
         """
-        Times in seconds
+        Times in seconds.
+
+        CerebusInfoA start and end times are on the clock of the recording file the trial was
+        recorded in (datafileA001, A002, ...), which restarts at zero with each file. Each segment
+        after the first is shifted to start one mean inter-trial interval after the last trial of the
+        previous segment, or, if the previous segment's recording is longer than that, at the end of
+        that recording (see ``segment_durations``).
+
+        Returns
+        -------
+        trial_times : np.ndarray
+            (n_trials, 2) start and stop times on the session timeline.
+        segment_offsets : np.ndarray
+            For each recording segment, the time on the session timeline of t=0 in that segment's
+            recording file.
         """
         if trial_nos is None:
             trial_nos = self._good_trials
@@ -54,23 +70,22 @@ class MatDataExtractor:
                 for i in trial_nos
             ]
         )
-        split_id = np.where(np.diff(trial_times[:, 0]) < 0)[0][0] + 1
-        # find mean inter_trial times:
-        inter_trial_intervals = []
-        trial_conti = np.diff(self._good_trials)
-        for i in range(len(self._good_trials) - 1):
-            if trial_conti[i] == 1:
-                inter_trial_intervals.append(trial_times[i + 1, 0] - trial_times[i, 1])
-            else:
-                inter_trial_intervals.append(np.nan)
-        inter_trial_intervals = np.array(inter_trial_intervals)
-        inter_trial_intervals = np.delete(inter_trial_intervals, split_id - 1)
-        mean_interval = np.nanmean(inter_trial_intervals)
-        offset_value = (
-            trial_times[split_id - 1, 1] + mean_interval - trial_times[split_id, 0]
-        )
-        trial_times[split_id:, :] = trial_times[split_id:, :] + offset_value
-        return trial_times, split_id
+        segment_starts = np.flatnonzero(np.diff(trial_times[:, 0]) < 0) + 1
+        segment_bounds = np.r_[0, segment_starts, len(trial_times)]
+        # mean interval between consecutive good trials within the same segment:
+        inter_trial_intervals = trial_times[1:, 0] - trial_times[:-1, 1]
+        within_segment = np.diff(self._good_trials) == 1
+        within_segment[segment_starts - 1] = False
+        mean_interval = inter_trial_intervals[within_segment].mean()
+        segment_offsets = np.zeros(len(segment_bounds) - 1)
+        for seg in range(1, len(segment_offsets)):
+            start, stop = segment_bounds[seg], segment_bounds[seg + 1]
+            offset = trial_times[start - 1, 1] + mean_interval - trial_times[start, 0]
+            if self.segment_durations is not None:
+                offset = max(offset, segment_offsets[seg - 1] + self.segment_durations[seg - 1])
+            segment_offsets[seg] = offset
+            trial_times[start:stop, :] += offset
+        return trial_times, segment_offsets
 
     def extract_trial_events(self, trial_nos=None):
         """

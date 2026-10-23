@@ -58,8 +58,18 @@ class ShenoyMatDataInterface(BaseDataInterface):
         )
         position_container = Position()
         spatial_series_list = []
-        for name, data in zip(
-                ["Eye", "Hand", "Cursor"], [eye_data, hand_data, cursor_data]
+        hand_y_offset = 24 if self.mat_extractor.monkey_name == "N" else 8
+        # hand and cursor positions are in mm on the screen; the unit of eye position is not known
+        for name, data, conversion, description in zip(
+                ["Eye", "Hand", "Cursor"],
+                [eye_data, hand_data, cursor_data],
+                [np.nan, 1e-3, 1e-3],
+                [
+                    "x,y position of the eye",
+                    f"x,y position of the hand in mm. {hand_y_offset} mm has been subtracted from y, "
+                    f"the offset between the saved hand position and the screen for this monkey.",
+                    "x,y position of the cursor on the screen in mm",
+                ],
         ):
             spatial_series_list.append(
                 position_container.create_spatial_series(
@@ -67,7 +77,8 @@ class ShenoyMatDataInterface(BaseDataInterface):
                     data=data[:, :2],
                     timestamps=data[:, 2],
                     reference_frame="screen center",
-                    conversion=np.nan,
+                    conversion=conversion,
+                    description=description,
                 )
             )
         beh_mod.add(position_container)
