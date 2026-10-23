@@ -43,6 +43,9 @@ def session_to_nwb(*, data_dir_path, output_dir_path, subject_id: str):
     metadata["Subject"]["subject_id"] = subject_id
     if subject_id in DATES_OF_BIRTH:
         metadata["Subject"]["date_of_birth"] = pst.localize(DATES_OF_BIRTH[subject_id])
+    else:
+        # age unknown: an ISO 8601 interval with both ends unspecified
+        metadata["Subject"]["age"] = "/"
 
     nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{metadata['NWBFile']['session_id']}.nwb"
 
