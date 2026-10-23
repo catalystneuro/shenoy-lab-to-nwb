@@ -27,3 +27,24 @@ NWBFile:
 Subject:
   species: Macaca mulatta
   sex: M
+
+# Ontology terms written into the file as HERD references, keyed by the exact strings in the file.
+# UBERON has no term for dorsal premotor cortex, so PMd is annotated as premotor cortex.
+ExternalResources:
+  species:
+    Macaca mulatta:
+      id: NCBITaxon:9544
+      uri: http://purl.obolibrary.org/obo/NCBITaxon_9544
+  brain_regions:
+    Caudal, dorsal Pre-motor cortex, Left hemisphere:
+      id: UBERON:0016634
+      uri: http://purl.obolibrary.org/obo/UBERON_0016634
+    Pre-Motor Cortex, dorsal:
+      id: UBERON:0016634
+      uri: http://purl.obolibrary.org/obo/UBERON_0016634
+    M1 in Motor Cortex, left hemisphere:
+      id: UBERON:0001384
+      uri: http://purl.obolibrary.org/obo/UBERON_0001384
+    M1 Motor Cortex:
+      id: UBERON:0001384
+      uri: http://purl.obolibrary.org/obo/UBERON_0001384
