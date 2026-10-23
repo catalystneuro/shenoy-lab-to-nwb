@@ -9,6 +9,17 @@ NWBFile:
     - https://doi.org/10.1523/ENEURO.0085-16.2016
     - https://doi.org/10.1038/s41592-018-0109-9
   institution: Stanford University
+  experiment_description: >-
+    Delayed reaching in a maze task. The monkey fixated a central point, was shown one target without
+    barriers, one target with barriers, or three targets with barriers of which one was accessible, and
+    after a delay reached to the target on a vertical screen. Activity was recorded with two 96-channel
+    Utah arrays, one in dorsal premotor cortex (PMd) and one in primary motor cortex (M1).
+  keywords:
+    - motor cortex
+    - premotor cortex
+    - reaching
+    - Utah array
+    - macaque
   experimenter:
     - Kaufman, Matthew T.
     - Churchland, Mark M.
@@ -16,4 +27,3 @@ NWBFile:
 Subject:
   species: Macaca mulatta
   sex: M
-  subject_id: Nitschke

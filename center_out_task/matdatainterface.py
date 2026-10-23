@@ -165,6 +165,11 @@ class COutMatDataInterface(BaseDataInterface):
         # add units:
         # spikeRaster (units 0-95) is group "1" (M1) and spikeRaster2 (units 96-191) is group "2" (PMd),
         # the same groups as electrode rows 0-95 and 96-191
+        nwbfile.units = Units(
+            name="units",
+            description="Threshold crossings on each electrode from the rig's spike rasters, not sorted, one unit "
+            "per electrode.",
+        )
         for no, unit_sp_times in enumerate(spike_times):
             nwbfile.add_unit(
                 spike_times=unit_sp_times,

@@ -87,6 +87,21 @@ class MatDataExtractor:
             trial_times[start:stop, :] += offset
         return trial_times, segment_offsets
 
+    def extract_array_b_clock_map(self):
+        """
+        Linear map from each segment's array B recording clock to its array A recording clock,
+        fit to the trial start times that CerebusInfoA and CerebusInfoB give on each clock.
+
+        Returns
+        -------
+        list of (slope, intercept), one per segment, such that time_A = slope * time_B + intercept.
+        """
+        trial_nos = [i for i in self._good_trials if self.R["CerebusInfoB"][i].shape[0] == 1]
+        start_a = np.array([self.R["CerebusInfoA"][i]["startTime"][0, 0][0, 0] for i in trial_nos])
+        start_b = np.array([self.R["CerebusInfoB"][i]["startTime"][0, 0][0, 0] for i in trial_nos])
+        segment = np.r_[0, np.cumsum(np.diff(start_a) < 0)]
+        return [tuple(np.polyfit(start_b[segment == seg], start_a[segment == seg], 1)) for seg in np.unique(segment)]
+
     def extract_trial_events(self, trial_nos=None):
         """
         Time in seconds wrt trial start time
@@ -105,9 +120,17 @@ class MatDataExtractor:
             ["onlineRT", "reaction_time", "reaction time"],
             ["moveBeginsTime", "move_begins_time", "movement onset time"],
             ["moveEndsTime", "move_ends_time", "movement stop time"],
+            [
+                "offlineMoveOnsetTime",
+                "offline_move_onset_time",
+                "movement onset time, calculated offline using a robust algorithm",
+            ],
+            ["offlineRT", "offline_reaction_time", "reaction time calculated using offline_move_onset_time"],
         ]
         for event in events:
-            if "onlineRT" not in event:
+            if event[0] not in self.R.dtype.fields.keys():
+                continue
+            if event[0] not in ["onlineRT", "offlineRT"]:
                 trial_events_dict.append(
                     dict(
                         name=event[1],
@@ -168,6 +191,16 @@ class MatDataExtractor:
                 "(two random barriers). For a degenerate maze"
                 " (real maze with some barriers randomly removed) "
                 "trialVersion is >10",
+            ],
+            [
+                "activeFly",
+                "active_target",
+                "index (starting at 1) into target_positions of the target that was accessible",
+            ],
+            [
+                "unhittable",
+                "unhittable",
+                "1 if this was an 'impossible' maze, in which no target was accessible",
             ],
             [
                 "protoTrial",
@@ -311,11 +344,15 @@ class MatDataExtractor:
                 index=True,
             )
         )
-        hit_target_position = np.concatenate(
+        # whichFly counts from 1, and is 0 when no target was hit
+        hit_target_position = np.array(
             [
-                pos[self.R["whichFly"][no][0, 0] - 1, :][:, np.newaxis].T
-                for no, pos in enumerate(target_positions)
-            ]
+                pos[int(self.R["whichFly"][trial_no][0, 0]) - 1, :]
+                if self.R["whichFly"][trial_no][0, 0] > 0
+                else np.full(2, np.nan)
+                for trial_no, pos in zip(trial_nos, target_positions)
+            ],
+            dtype=float,
         )
         maze_details_list.append(
             dict(
@@ -332,6 +369,21 @@ class MatDataExtractor:
                 name="target_size",
                 data=target_size,
                 description="half width of the targets",
+            )
+        )
+        cursor_offset = np.array(
+            [
+                [self.R["PARAMS"][i][0, 0]["cursorDispX"][0, 0], self.R["PARAMS"][i][0, 0]["cursorDispY"][0, 0]]
+                for i in trial_nos
+            ],
+            dtype=float,
+        )
+        maze_details_list.append(
+            dict(
+                name="cursor_offset",
+                data=cursor_offset,
+                description="x,y offset in mm of the displayed cursor from the hand (PARAMS.cursorDispX/Y). "
+                "The cursor was displayed this far from the hand, so the hand ends a reach this far from the target.",
             )
         )
         barrier_data = []
