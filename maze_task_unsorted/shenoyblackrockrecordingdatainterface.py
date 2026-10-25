@@ -1,12 +1,11 @@
+from pathlib import Path
+
 from neuroconv.datainterfaces import BlackrockRecordingInterface
-from spikeinterface.extractors import BlackrockRecordingExtractor
-from neuroconv.utils import FilePathType
 import numpy as np
 
 class ShenoyBlackrockRecordingInterface(BlackrockRecordingInterface):
-    Extractor = BlackrockRecordingExtractor
-
-    def __init__(self, file_path: FilePathType, es_key: str = "ElectricalSeries"):
+    def __init__(self, file_path: Path, es_key: str = "ElectricalSeries"):
+        file_path = Path(file_path)
         super().__init__(file_path=file_path, es_key=es_key)
         if "B" in file_path.name:
             self._region = "M1 Motor Cortex"
@@ -17,20 +16,22 @@ class ShenoyBlackrockRecordingInterface(BlackrockRecordingInterface):
         else:
             self._region = "Pre-Motor Cortex, dorsal"
             self.recording_extractor.set_channel_groups([1] * 96)
-        self.recording_extractor.set_property("filtering", ["1000Hz"]*96)
         self.recording_extractor.set_property("brain_area", [self._region]*96)
         self.recording_extractor.set_property("channel_name", [f"chan{i}" for i in self.recording_extractor.channel_ids])
 
-    def get_metadata(self):
-        metadata = super().get_metadata()
+    def get_metadata(self, *, use_new_metadata_format: bool = False):
+        # this interface writes its metadata in neuroconv's list-based format
+        metadata = super().get_metadata(use_new_metadata_format=False)
 
         file_path = self.source_data["file_path"]
         es_key = self.es_key
 
+        metadata["Ecephys"][es_key]["name"] = file_path.stem[-4:]
         metadata["Ecephys"][es_key]["description"] = (
-        f"LFP signal for array {file_path.stem[8]}, segment {file_path.stem[-1]}"
-        f"data for both arrays A,B in the same segment should be, but is not of the same time length"
-        f"and cannot be synced due to lack of time stamps. Ignore the starting times."
+            f"LFP signal for array {file_path.stem[8]}, segment {file_path.stem[-1]}. "
+            f"Array A shares a clock with the trials and spikes, and is placed at the offset applied to this "
+            f"segment's trials. Array B was recorded by a second system whose clock runs slightly slower; its "
+            f"timestamps map it onto array A's clock using the trial start times recorded by both systems."
         )
         metadata["Ecephys"]["Device"] = [
             dict(

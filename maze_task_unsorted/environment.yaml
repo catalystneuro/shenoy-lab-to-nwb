@@ -5,5 +5,5 @@ dependencies:
   - python=3.12
   - pip
   - pip:
-    - neuroconv
+    - neuroconv @ git+https://github.com/catalystneuro/neuroconv.git@main  # for ExternalResources (HERD) support
     - spikeinterface

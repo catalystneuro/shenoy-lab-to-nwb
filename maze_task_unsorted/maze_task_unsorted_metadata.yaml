@@ -9,6 +9,17 @@ NWBFile:
     - https://doi.org/10.1523/ENEURO.0085-16.2016
     - https://doi.org/10.1038/s41592-018-0109-9
   institution: Stanford University
+  experiment_description: >-
+    Delayed reaching in a maze task. The monkey fixated a central point, was shown one target without
+    barriers, one target with barriers, or three targets with barriers of which one was accessible, and
+    after a delay reached to the target on a vertical screen. Activity was recorded with two 96-channel
+    Utah arrays, one in dorsal premotor cortex (PMd) and one in primary motor cortex (M1).
+  keywords:
+    - motor cortex
+    - premotor cortex
+    - reaching
+    - Utah array
+    - macaque
   experimenter:
     - Kaufman, Matthew T.
     - Churchland, Mark M.
@@ -16,4 +27,24 @@ NWBFile:
 Subject:
   species: Macaca mulatta
   sex: M
-  subject_id: Nitschke
+
+# Ontology terms written into the file as HERD references, keyed by the exact strings in the file.
+# UBERON has no term for dorsal premotor cortex, so PMd is annotated as premotor cortex.
+ExternalResources:
+  species:
+    Macaca mulatta:
+      id: NCBITaxon:9544
+      uri: http://purl.obolibrary.org/obo/NCBITaxon_9544
+  brain_regions:
+    Caudal, dorsal Pre-motor cortex, Left hemisphere:
+      id: UBERON:0016634
+      uri: http://purl.obolibrary.org/obo/UBERON_0016634
+    Pre-Motor Cortex, dorsal:
+      id: UBERON:0016634
+      uri: http://purl.obolibrary.org/obo/UBERON_0016634
+    M1 in Motor Cortex, left hemisphere:
+      id: UBERON:0001384
+      uri: http://purl.obolibrary.org/obo/UBERON_0001384
+    M1 Motor Cortex:
+      id: UBERON:0001384
+      uri: http://purl.obolibrary.org/obo/UBERON_0001384

@@ -135,7 +135,7 @@ class MatDataExtractor:
         out_dict = [
             dict(
                 name="is_successful",
-                description="if monkey started before the mandatory delay period after target shown",
+                description="whether the trial was successful, from the rig's trial success flag",
                 data=self._return_array("isSuccessful"),
             ),
             dict(

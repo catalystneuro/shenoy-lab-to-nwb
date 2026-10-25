@@ -105,10 +105,11 @@ class COutMatDataInterface(BaseDataInterface):
         position_container = Position()
         spatial_series_list = []
         for beh in beh_pos:
+            # positions are in mm on the screen
             args = dict(
                 timestamps=trial_times_all,
                 reference_frame="screen center",
-                conversion=np.nan,
+                conversion=1e-3,
             )
             spatial_series_list.append(
                 position_container.create_spatial_series(**beh, **args)
@@ -151,23 +152,29 @@ class COutMatDataInterface(BaseDataInterface):
             # add electrdoe groups:
             nwbfile.create_electrode_group(
                 name="1",
-                description="array corresponding to device implanted at PMd",
-                location="Caudal, dorsal Pre-motor cortex, Left hemisphere",
-                device=nwbfile.devices["Utah Electrode"],
-            )
-            nwbfile.create_electrode_group(
-                name="2",
                 description="array corresponding to device implanted at M1",
                 location="M1 in Motor Cortex, left hemisphere",
                 device=nwbfile.devices["Utah Electrode"],
             )
+            nwbfile.create_electrode_group(
+                name="2",
+                description="array corresponding to device implanted at PMd",
+                location="Caudal, dorsal Pre-motor cortex, Left hemisphere",
+                device=nwbfile.devices["Utah Electrode"],
+            )
         # add units:
+        # spikeRaster (units 0-95) is group "1" (M1) and spikeRaster2 (units 96-191) is group "2" (PMd),
+        # the same groups as electrode rows 0-95 and 96-191
+        nwbfile.units = Units(
+            name="units",
+            description="Threshold crossings on each electrode from the rig's spike rasters, not sorted, one unit "
+            "per electrode.",
+        )
         for no, unit_sp_times in enumerate(spike_times):
-            elec_group = 1 if no > 95 else 0
             nwbfile.add_unit(
                 spike_times=unit_sp_times,
                 electrodes=[no],
-                electrode_group=list(nwbfile.electrode_groups.values())[elec_group],
+                electrode_group=nwbfile.electrode_groups["2" if no > 95 else "1"],
                 obs_intervals=np.array([trial_times[0][0], trial_times[-1][-1]])[
                               np.newaxis, :
                               ],

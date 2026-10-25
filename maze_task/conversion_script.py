@@ -28,6 +28,8 @@ def convert(source_folder):
     nsx_list = [str(i.with_name(nsx_file_names[no])) for no, i in enumerate(nsx_files)]
     mat_file = str(list(source_folder.glob("**/R*.mat"))[0])
     subject_name = source_folder.parent.parent.name
+    # the mat file is named like "RC,2009-09-28,1-2.mat"; take the session date from it
+    session_date = Path(mat_file).stem.split(",")[1]
 
     # construct argument for nwbconverter based on schema:
     arg_names = ["A1", "B1", "A2", "B2", "A3", "B3", "A4", "B4"]
@@ -35,7 +37,7 @@ def convert(source_folder):
         Mat=dict(filename=mat_file, subject_name=subject_name[0]),
         subject_name=subject_name,
         date=pytz.timezone("US/Pacific").localize(
-            datetime.strptime("2009" + source_folder.name, "%Y%m%d")
+            datetime.strptime(session_date, "%Y-%m-%d")
         ),
     )
     for no, filename in enumerate(nsx_list):
