@@ -5,6 +5,7 @@ import numpy as np
 from nwb_conversion_tools.basedatainterface import BaseDataInterface
 from pynwb import NWBFile
 from pynwb.behavior import Position
+from pynwb.misc import Units
 
 from .matextractor import MatDataExtractor
 
@@ -58,8 +59,20 @@ class ShenoyMatDataInterface(BaseDataInterface):
         )
         position_container = Position()
         spatial_series_list = []
-        for name, data in zip(
-                ["Eye", "Hand", "Cursor"], [eye_data, hand_data, cursor_data]
+        hand_y_offset = 24 if self.mat_extractor.monkey_name == "N" else 8
+        # hand and cursor positions are in mm on the screen; the unit of eye position is not known
+        for name, data, conversion, description in zip(
+                ["Eye", "Hand", "Cursor"],
+                [eye_data, hand_data, cursor_data],
+                [np.nan, 1e-3, 1e-3],
+                [
+                    "x,y position of the eye",
+                    f"x,y position of the hand in mm. {hand_y_offset} mm has been subtracted from y to correct "
+                    f"a bug in the rig's save code for this monkey. The cursor was displayed offset from the hand "
+                    f"by the trials' cursor_offset.",
+                    "x,y position of the cursor on the screen in mm, after the rig's filtering and inertial "
+                    "prediction. Use the hand position for analysis.",
+                ],
         ):
             spatial_series_list.append(
                 position_container.create_spatial_series(
@@ -67,7 +80,8 @@ class ShenoyMatDataInterface(BaseDataInterface):
                     data=data[:, :2],
                     timestamps=data[:, 2],
                     reference_frame="screen center",
-                    conversion=np.nan,
+                    conversion=conversion,
+                    description=description,
                 )
             )
         beh_mod.add(position_container)
@@ -88,9 +102,15 @@ class ShenoyMatDataInterface(BaseDataInterface):
             nwbfile.add_trial(**col_details_dict)
         # add units:
         unit_lookup_corrected = [
-            list(np.array([ch_id - 1]) + 96) if array_lookup[no] == 2 else [ch_id - 1]
+            [int(ch_id) - 1 + 96] if array_lookup[no] == 2 else [int(ch_id) - 1]
             for no, ch_id in enumerate(unit_lookup)
         ]
+        nwbfile.units = Units(
+            name="units",
+            description="Threshold crossings on each electrode, not sorted (Blackrock unit code 0), one unit per "
+            "electrode. Spike times were saved for each trial only, so obs_intervals are the trials.",
+            resolution=1 / 30000,
+        )
         for unit_no in range(len(unit_spike_times)):
             nwbfile.add_unit(
                 spike_times=unit_spike_times[unit_no],
