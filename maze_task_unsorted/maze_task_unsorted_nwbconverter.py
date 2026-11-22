@@ -21,7 +21,8 @@ class MazeTaskUnsortedNWBConverter(NWBConverter):
         # Trial times are on the clock of each array A recording file, which restarts at zero with
         # every segment. Place each segment's recordings at the offset its trials were shifted by.
         # Array B was recorded by a second system with its own clock, which is mapped onto array A's
-        # clock using the trial start times recorded on both.
+        # clock using the trial start times recorded on both. Each segment is placed late enough that
+        # neither array's recording overlaps that array's recording of the previous segment.
         mat_extractor = self.data_interface_objects["Mat"].mat_extractor
         segment_keys = sorted(
             (key for key in self.data_interface_objects if key.startswith("A")), key=lambda key: int(key[1:])
@@ -29,6 +30,16 @@ class MazeTaskUnsortedNWBConverter(NWBConverter):
         mat_extractor.segment_durations = [
             self.data_interface_objects[key].recording_extractor.get_total_duration() for key in segment_keys
         ]
+        array_b_keys = [f"B{key[1:]}" for key in segment_keys]
+        if all(key in self.data_interface_objects for key in array_b_keys):
+            array_b_time_ranges = []
+            for key in array_b_keys:
+                interface = self.data_interface_objects[key]
+                recording = interface.recording_extractor
+                start = interface.get_timestamps()[0]
+                duration = recording.get_num_samples() / recording.get_sampling_frequency()
+                array_b_time_ranges.append((start, start + duration))
+            mat_extractor.array_b_time_ranges = array_b_time_ranges
         _, segment_offsets = mat_extractor.extract_trial_times()
         array_b_clock_map = mat_extractor.extract_array_b_clock_map()
         for segment, offset in enumerate(segment_offsets, start=1):

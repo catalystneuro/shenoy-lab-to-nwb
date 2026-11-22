@@ -15,6 +15,9 @@ class MatDataExtractor:
         self._no_units = self.SU[0, 0]["unitLookup"].shape[0]
         # durations in seconds of the array A recording files (datafileA001, A002, ...), if known
         self.segment_durations = None
+        # (start, end) in seconds of the array B recording files (datafileB001, B002, ...) on array B's
+        # own clock, if known
+        self.array_b_time_ranges = None
 
     def good_trials(self):
         good_trials = []
@@ -48,8 +51,13 @@ class MatDataExtractor:
         CerebusInfoA start and end times are on the clock of the recording file the trial was
         recorded in (datafileA001, A002, ...), which restarts at zero with each file. Each segment
         after the first is shifted to start one mean inter-trial interval after the last trial of the
-        previous segment, or, if the previous segment's recording is longer than that, at the end of
-        that recording (see ``segment_durations``).
+        previous segment, or later if needed so that each array's recording starts no earlier than
+        that array's recording of the previous segment ends. The array A recordings start at zero on
+        their segment's clock and last ``segment_durations``. The array B recordings cover
+        ``array_b_time_ranges`` on array B's clock, which ``extract_array_b_clock_map`` maps onto
+        array A's clock. Mapped this way, an array B recording can start slightly before its array A
+        recording and end more than a second after it. An array whose recordings are not given is
+        not considered.
 
         Returns
         -------
@@ -77,12 +85,30 @@ class MatDataExtractor:
         within_segment = np.diff(self._good_trials) == 1
         within_segment[segment_starts - 1] = False
         mean_interval = inter_trial_intervals[within_segment].mean()
-        segment_offsets = np.zeros(len(segment_bounds) - 1)
-        for seg in range(1, len(segment_offsets)):
+        # (start, end) of each segment's recording on its own array A clock, for each array whose
+        # recordings are known:
+        n_segments = len(segment_bounds) - 1
+        recording_ranges = []
+        if self.segment_durations is not None:
+            recording_ranges.append([(0.0, duration) for duration in self.segment_durations[:n_segments]])
+        if self.array_b_time_ranges is not None:
+            # the clock map comes from the trial start times on each recording's own clock, so it
+            # does not depend on the offsets
+            recording_ranges.append(
+                [
+                    (intercept + slope * b_start, intercept + slope * b_end)
+                    for (slope, intercept), (b_start, b_end) in zip(
+                        self.extract_array_b_clock_map(), self.array_b_time_ranges
+                    )
+                ]
+            )
+        segment_offsets = np.zeros(n_segments)
+        for seg in range(1, n_segments):
             start, stop = segment_bounds[seg], segment_bounds[seg + 1]
             offset = trial_times[start - 1, 1] + mean_interval - trial_times[start, 0]
-            if self.segment_durations is not None:
-                offset = max(offset, segment_offsets[seg - 1] + self.segment_durations[seg - 1])
+            # each array's recording starts no earlier than that array's previous recording ends:
+            for ranges in recording_ranges:
+                offset = max(offset, segment_offsets[seg - 1] + ranges[seg - 1][1] - ranges[seg][0])
             segment_offsets[seg] = offset
             trial_times[start:stop, :] += offset
         return trial_times, segment_offsets
